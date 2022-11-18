@@ -2,18 +2,18 @@ cmake_minimum_required(VERSION 3.7)
 
 project(vgg_contrib_quickjs)
 set(QJS_SRCS
-  upstream/quickjs.c
-  upstream/libregexp.c
-  upstream/libunicode.c
-  upstream/cutils.c
-  upstream/quickjs-libc.c
-  upstream/libbf.c
+  upstream/quickjs/quickjs.c
+  upstream/quickjs/libregexp.c
+  upstream/quickjs/libunicode.c
+  upstream/quickjs/cutils.c
+  upstream/quickjs/quickjs-libc.c
+  upstream/quickjs/libbf.c
 )
 
 add_library(quickjs STATIC ${QJS_SRCS})
 target_compile_options(quickjs PRIVATE
   -D_GNU_SOURCE
-  -DCONFIG_VERSION="2022-03-07"
+  -DCONFIG_VERSION="2021-03-27"
   -DCONFIG_BIGNUM
   -DDUMP_LEAKS
 )

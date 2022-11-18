@@ -20,6 +20,7 @@ Some rules for each library:
 | [zlib](https://github.com/madler/zlib)          | [Custom](https://github.com/madler/zlib/blob/master/LICENSE) | [1.2.13](https://github.com/madler/zlib/releases/tag/v1.2.13) | compression | directory      |
 | [zstd](https://github.com/facebook/zstd)        | BSD/GPLv2                                                    | [1.5.2](https://github.com/facebook/zstd/releases/tag/v1.5.2) | compression | directory      |
 | [minifb](https://github.com/emoon/minifb)       | MIT                                                          | [5312cb](https://github.com/emoon/minifb/commit/5312cb7ca07115c918148131d296864b8d67e2d7) | window      | directory      |
+| [qickjs](https://github.com/bellard/quickjs)    | MIT                                                          | [2788d71](https://github.com/bellard/quickjs/commit/2788d71e823b522b178db3b3660ce93689534e6d) | js      | directory      |
 |                                                 |                                                              |                                                              |             |                |
 
 ## How to use
