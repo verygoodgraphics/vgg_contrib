@@ -1,0 +1,48 @@
+cmake_minimum_required(VERSION 3.7)
+
+project(vgg_contrib)
+
+add_subdirectory(json)
+add_subdirectory(picosha2)
+add_subdirectory(sdefl)
+add_subdirectory(zlib)
+add_subdirectory(zstd)
+add_subdirectory(minifb)
+
+# Debug info
+message(STATUS "VGG_CONTRIB_JSON_INCLUDE: " ${VGG_CONTRIB_JSON_INCLUDE})
+message(STATUS "VGG_CONTRIB_PICOSHA2_INCLUDE: " ${VGG_CONTRIB_PICOSHA2_INCLUDE})
+message(STATUS "VGG_CONTRIB_SDEFL_INCLUDE: " ${VGG_CONTRIB_SDEFL_INCLUDE})
+message(STATUS "VGG_CONTRIB_ZLIB_INCLUDE: " ${VGG_CONTRIB_ZLIB_INCLUDE})
+message(STATUS "VGG_CONTRIB_ZCONF_INCLUDE: " ${VGG_CONTRIB_ZCONF_INCLUDE})
+message(STATUS "VGG_CONTRIB_ZSTD_INCLUDE: " ${VGG_CONTRIB_ZSTD_INCLUDE})
+message(STATUS "VGG_CONTRIB_MINIFB_INCLUDE: " ${VGG_CONTRIB_MINIFB_INCLUDE})
+
+# Integration
+set(VGG_CONTRIB_INCLUDE "\
+${VGG_CONTRIB_JSON_INCLUDE};\
+${VGG_CONTRIB_PICOSHA2_INCLUDE};\
+${VGG_CONTRIB_SDEFL_INCLUDE};\
+${VGG_CONTRIB_ZLIB_INCLUDE};\
+${VGG_CONTRIB_ZCONF_INCLUDE};\
+${VGG_CONTRIB_ZSTD_INCLUDE};\
+${VGG_CONTRIB_MINIFB_INCLUDE}"
+  CACHE STRING "" FORCE)
+mark_as_advanced(VGG_CONTRIB_INCLUDE)
+
+# Test
+add_executable(contrib_test test.cc)
+set_target_properties(contrib_test PROPERTIES
+  CXX_STANDARD 17
+)
+# target_include_directories(contrib_test PRIVATE ${VGG_CONTRIB_INCLUDE})
+target_include_directories(contrib_test PRIVATE
+  ${VGG_CONTRIB_JSON_INCLUDE}
+  ${VGG_CONTRIB_PICOSHA2_INCLUDE}
+  ${VGG_CONTRIB_SDEFL_INCLUDE}
+  ${VGG_CONTRIB_ZLIB_INCLUDE}
+  ${VGG_CONTRIB_ZCONF_INCLUDE}
+  ${VGG_CONTRIB_ZSTD_INCLUDE}
+  ${VGG_CONTRIB_MINIFB_INCLUDE}
+)
+target_link_libraries(contrib_test minifb zlib libzstd_shared)
