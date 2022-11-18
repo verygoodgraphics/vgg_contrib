@@ -60,7 +60,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | minifb      | `VGG_CONTRIB_MINIFB_INCLUDE`   | static: `minifb`                                   |
 |             |                                |                                                    |
 
-
+For the specific header file usage, please refer to the `test.cc` for example.
 
 ## How to contribute
 
@@ -87,3 +87,4 @@ set(VGG_CONTRIB_NEW_LIBRARY_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/upstream/ CACHE 
 mark_as_advanced(VGG_CONTRIB_NEW_LIBRARY_INCLUDE)
 ```
 
+And don't forget to update `test.cc`, `CMakeLists.txt` and `README.md` in the root directory.
