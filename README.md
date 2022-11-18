@@ -58,6 +58,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | zlib        | `VGG_CONTRIB_ZLIB_INCLUDE`     | shared: `zlib`, static: `zlibstatic`               |
 | zstd        | `VGG_CONTRIB_ZSTD_INCLUDE`     | shared: `libzstd_shared`, static: `libzstd_static` |
 | minifb      | `VGG_CONTRIB_MINIFB_INCLUDE`   | static: `minifb`                                   |
+| quickjs     | `VGG_CONTRIB_QUICKJS_INCLUDE`  | static: `quickjs`                                  |
 |             |                                |                                                    |
 
 For the specific header file usage, please refer to the `test.cc` for example.

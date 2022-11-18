@@ -5,6 +5,7 @@
 #include "zlib.h"
 #include "zstd.h"
 #include "MiniFB_cpp.h"
+#include "quickjs.h"
 
 int main() {
   return 0;
