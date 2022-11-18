@@ -20,6 +20,7 @@ Some rules for each library:
 | [zlib](https://github.com/madler/zlib)          | [Custom](https://github.com/madler/zlib/blob/master/LICENSE) | [1.2.13](https://github.com/madler/zlib/releases/tag/v1.2.13) | compression | directory      |
 | [zstd](https://github.com/facebook/zstd)        | BSD/GPLv2                                                    | [1.5.2](https://github.com/facebook/zstd/releases/tag/v1.5.2) | compression | directory      |
 | [minifb](https://github.com/emoon/minifb)       | MIT                                                          | [5312cb](https://github.com/emoon/minifb/commit/5312cb7ca07115c918148131d296864b8d67e2d7) | window      | directory      |
+| [quickjs](https://github.com/bellard/quickjs)   | MIT                                                          | [2788d7](https://github.com/bellard/quickjs/commit/2788d71e823b522b178db3b3660ce93689534e6d) | js      | directory      |
 |                                                 |                                                              |                                                              |             |                |
 
 ## How to use
@@ -58,6 +59,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | zlib        | `VGG_CONTRIB_ZLIB_INCLUDE`     | shared: `zlib`, static: `zlibstatic`               |
 | zstd        | `VGG_CONTRIB_ZSTD_INCLUDE`     | shared: `libzstd_shared`, static: `libzstd_static` |
 | minifb      | `VGG_CONTRIB_MINIFB_INCLUDE`   | static: `minifb`                                   |
+| quickjs     | `VGG_CONTRIB_QUICKJS_INCLUDE`  | static: `quickjs`                                  |
 |             |                                |                                                    |
 
 For the specific header file usage, please refer to the `test.cc` for example.
