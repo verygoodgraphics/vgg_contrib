@@ -13,7 +13,7 @@ set(QJS_SRCS
 add_library(quickjs STATIC ${QJS_SRCS})
 target_compile_options(quickjs PRIVATE
   -D_GNU_SOURCE
-  -DCONFIG_VERSION="2020-11-08"
+  -DCONFIG_VERSION="2022-03-07"
   -DCONFIG_BIGNUM
   -DDUMP_LEAKS
 )
