@@ -33,7 +33,7 @@ mark_as_advanced(VGG_CONTRIB_INCLUDE)
 # Test
 add_executable(contrib_test test.cc)
 set_target_properties(contrib_test PROPERTIES
-  CXX_STANDARD 17
+  CXX_STANDARD 11
 )
 # target_include_directories(contrib_test PRIVATE ${VGG_CONTRIB_INCLUDE})
 target_include_directories(contrib_test PRIVATE
