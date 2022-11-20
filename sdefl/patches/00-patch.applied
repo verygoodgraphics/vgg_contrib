@@ -1,0 +1,11 @@
+--- upstream/sinfl.h	2022-11-18 10:41:04.000000000 +0800
++++ patches/sinfl.h	2022-11-20 20:04:21.000000000 +0800
+@@ -169,7 +169,7 @@
+ #endif
+ 
+ static int
+-sinfl_bsr(unsigned n) {
++sinfl_bsr(unsigned long n) {
+ #ifdef _MSC_VER
+   _BitScanReverse(&n, n);
+   return n;
