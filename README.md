@@ -8,7 +8,7 @@ Some rules for each library:
   - If the library is header-only, then a pre-built single-header file is prefered,
   - Otherwise the original library root is included.
 - Dependencies of a library should be flattened out as other libraries in this repo
-- The original code lies in `upstream` directory, while custom modifications lies in `patches` directory
+- The original code lies in `upstream` directory, while custom modifications lie in `patches` directory
 
 ## Library List
 
@@ -21,7 +21,7 @@ Some rules for each library:
 | [zstd](https://github.com/facebook/zstd)        | BSD/GPLv2                                                    | [1.5.2](https://github.com/facebook/zstd/releases/tag/v1.5.2) | compression | directory      |
 | [minifb](https://github.com/emoon/minifb)       | MIT                                                          | [5312cb](https://github.com/emoon/minifb/commit/5312cb7ca07115c918148131d296864b8d67e2d7) | window      | directory      |
 | [quickjs](https://github.com/bellard/quickjs)   | MIT                                                          | [2788d7](https://github.com/bellard/quickjs/commit/2788d71e823b522b178db3b3660ce93689534e6d) | js      | directory      |
-|                                                 |                                                              |                                                              |             |                |
+| [libpng](https://sourceforge.net/projects/libpng/) | [Custom](http://www.libpng.org/pub/png/src/libpng-LICENSE.txt) | [1.6.38](https://sourceforge.net/projects/libpng/files/libpng16/1.6.38/) | image       | directory      |
 
 ## How to use
 
@@ -60,7 +60,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | zstd        | `VGG_CONTRIB_ZSTD_INCLUDE`     | shared: `libzstd_shared`, static: `libzstd_static` |
 | minifb      | `VGG_CONTRIB_MINIFB_INCLUDE`   | static: `minifb`                                   |
 | quickjs     | `VGG_CONTRIB_QUICKJS_INCLUDE`  | static: `quickjs`                                  |
-|             |                                |                                                    |
+| libpng      | `VGG_CONTRIB_LIBPNG_INCLUDE`   | shared: `png`, static: `png_static`                |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
@@ -83,10 +83,20 @@ cmake_minimum_required(VERSION 3.7)
 
 project(vgg_contrib_new_library)
 
-add_subdirectory(upstream) # if this library has CMakeLists.txt in its root
+add_subdirectory(upstream) # if this library has CMakeLists.txt, otherwise you have to write your own
 
 set(VGG_CONTRIB_NEW_LIBRARY_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/upstream/ CACHE PATH "" FORCE) # setup include path properly
 mark_as_advanced(VGG_CONTRIB_NEW_LIBRARY_INCLUDE)
 ```
 
 And don't forget to update `test.cc`, `CMakeLists.txt` and `README.md` in the root directory.
+
+### Tips
+
+When adding third-party source code in upstream folder, it is highly possible that some files are not added to the git version control because of rules in `.gitignore` in its directories. To list all files that is not added, use the command to find out
+
+```
+git clean -fdnx
+```
+
+and decide whether or not to forcibly add those missing files using `git add -f`. Look out!

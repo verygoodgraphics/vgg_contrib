@@ -6,6 +6,7 @@
 #include "zstd.h"
 #include "MiniFB_cpp.h"
 #include "quickjs/quickjs.h"
+#include "png.h"
 
 int main() {
   return 0;
