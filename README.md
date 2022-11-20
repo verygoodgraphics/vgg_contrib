@@ -8,7 +8,8 @@ Some rules for each library:
   - If the library is header-only, then a pre-built single-header file is prefered,
   - Otherwise the original library root is included.
 - Dependencies of a library should be flattened out as other libraries in this repo
-- The original code lies in `upstream` directory, while custom modifications lie in `patches` directory
+- The original code lies in `upstream` directory, with modifications if neccessary
+- The modifications to the original code lie in `patches` directory
 
 ## Library List
 
@@ -78,7 +79,7 @@ vgg_contrib/
 
 where `upstream` is for original library root, and `pathces` is for custom modifications for upstream. A `CMakeLists.txt` sample is as follows
 
-```
+```cmake
 cmake_minimum_required(VERSION 3.7)
 
 project(vgg_contrib_new_library)
@@ -95,8 +96,40 @@ And don't forget to update `test.cc`, `CMakeLists.txt` and `README.md` in the ro
 
 When adding third-party source code in upstream folder, it is highly possible that some files are not added to the git version control because of rules in `.gitignore` in its directories. To list all files that is not added, use the command to find out
 
-```
+```bash
 git clean -fdnx
 ```
 
 and decide whether or not to forcibly add those missing files using `git add -f`. Look out!
+
+## About How to make and apply a patch
+
+Sometimes it is neccessary to patch the library source code to meet our needs, and it is a good practice to keep track of the changes in patch files. For example, if the upstream got updated, we could just re-patch the code effortlessly.
+
+In this project, we assume all the code in `upstream` directory is already patched so that we could use it at ease.
+
+### How to make a patch
+
+Take the `sdefl` library for example. Say we have made changes to `upstream/sinfl.h` **in place**, and the original code have been copied as the `original` folder. We could use the following command to make a new patch
+
+```bash
+diff -u original/ upstream/ > patches/00-patch.applied
+```
+
+### How to apply a patch
+
+If we update the `sinfl.h` to the latest upstream version, un-patched, we could use the following command to re-patch this file
+
+```bash
+cd upstream/
+patch -p1 < ../patches/00-patch.applied
+```
+
+### How to revert a patch
+
+If we need to use the original `sinfl.h`, we use the following command to turn it back
+
+```bash
+cd upstream/
+patch -R -p1 < ../patches/00-patch.applied
+```

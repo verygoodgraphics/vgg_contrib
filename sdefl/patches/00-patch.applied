@@ -1,5 +1,6 @@
---- upstream/sinfl.h	2022-11-18 10:41:04.000000000 +0800
-+++ patches/sinfl.h	2022-11-20 20:04:21.000000000 +0800
+diff -u original/sinfl.h upstream/sinfl.h
+--- original/sinfl.h	2022-11-20 20:39:39.000000000 +0800
++++ upstream/sinfl.h	2022-11-20 20:40:06.000000000 +0800
 @@ -169,7 +169,7 @@
  #endif
  
