@@ -84,7 +84,7 @@ cmake_minimum_required(VERSION 3.7)
 
 project(vgg_contrib_new_library)
 
-add_subdirectory(upstream) # if this library has CMakeLists.txt, otherwise you have to write your own
+add_subdirectory(upstream) # only if this library has CMakeLists.txt, otherwise you have to write your own
 
 set(VGG_CONTRIB_NEW_LIBRARY_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/upstream/ CACHE PATH "" FORCE) # setup include path properly
 mark_as_advanced(VGG_CONTRIB_NEW_LIBRARY_INCLUDE)
@@ -102,7 +102,7 @@ git clean -fdnx
 
 and decide whether or not to forcibly add those missing files using `git add -f`. Look out!
 
-## About How to make and apply a patch
+## About patching
 
 Sometimes it is neccessary to patch the library source code to meet our needs, and it is a good practice to keep track of the changes in patch files. For example, if the upstream got updated, we could just re-patch the code effortlessly.
 
