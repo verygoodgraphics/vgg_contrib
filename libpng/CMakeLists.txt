@@ -9,7 +9,7 @@ if (NOT VGG_CONTRIB_ZLIB_INCLUDE)
   message(FATAL_ERROR "Please add zlib first for libpng")
 endif()
 set(ZLIB_INCLUDE_DIR ${VGG_CONTRIB_ZLIB_INCLUDE}) # for upstream/scripts/genout.cmake.in
-set(ZLIB_INCLUDE_DIRS ${VGG_CONTRIB_ZLIB_INCLUDE})
+set(ZLIB_INCLUDE_DIRS ${VGG_CONTRIB_ZLIB_INCLUDE} ${VGG_CONTRIB_ZLIB_CONF_INCLUDE})
 set(ZLIB_LIBRARIES $<BUILD_INTERFACE:zlib>)
 add_subdirectory(upstream)
 
