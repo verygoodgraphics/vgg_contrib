@@ -7,6 +7,7 @@
 #include "MiniFB_cpp.h"
 #include "quickjs/quickjs.h"
 #include "png.h"
+#include "jpeglib.h"
 
 int main() {
   return 0;

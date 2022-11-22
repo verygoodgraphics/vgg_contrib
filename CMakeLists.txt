@@ -10,6 +10,7 @@ add_subdirectory(zstd)
 add_subdirectory(minifb)
 add_subdirectory(quickjs)
 add_subdirectory(libpng)
+add_subdirectory(libjpeg-turbo)
 
 # Debug info
 message(STATUS "VGG_CONTRIB_JSON_INCLUDE: " ${VGG_CONTRIB_JSON_INCLUDE})
@@ -22,6 +23,8 @@ message(STATUS "VGG_CONTRIB_MINIFB_INCLUDE: " ${VGG_CONTRIB_MINIFB_INCLUDE})
 message(STATUS "VGG_CONTRIB_QUICKJS_INCLUDE: " ${VGG_CONTRIB_QUICKJS_INCLUDE})
 message(STATUS "VGG_CONTRIB_LIBPNG_INCLUDE: " ${VGG_CONTRIB_LIBPNG_INCLUDE})
 message(STATUS "VGG_CONTRIB_LIBPNG_CONF_INCLUDE: " ${VGG_CONTRIB_LIBPNG_CONF_INCLUDE})
+message(STATUS "VGG_CONTRIB_LIBJPG_INCLUDE: " ${VGG_CONTRIB_LIBJPG_INCLUDE})
+message(STATUS "VGG_CONTRIB_LIBJPG_CONF_INCLUDE: " ${VGG_CONTRIB_LIBJPG_CONF_INCLUDE})
 
 # Integration
 set(VGG_CONTRIB_INCLUDE "\
@@ -35,6 +38,8 @@ ${VGG_CONTRIB_MINIFB_INCLUDE};\
 ${VGG_CONTRIB_QUICKJS_INCLUDE};\
 ${VGG_CONTRIB_LIBPNG_INCLUDE};\
 ${VGG_CONTRIB_LIBPNG_CONF_INCLUDE};\
+${VGG_CONTRIB_LIBJPG_INCLUDE};\
+${VGG_CONTRIB_LIBJPG_CONF_INCLUDE};\
 "
   CACHE STRING "" FORCE)
 mark_as_advanced(VGG_CONTRIB_INCLUDE)
@@ -56,5 +61,7 @@ target_include_directories(contrib_test PRIVATE
   ${VGG_CONTRIB_QUICKJS_INCLUDE}
   ${VGG_CONTRIB_LIBPNG_INCLUDE}
   ${VGG_CONTRIB_LIBPNG_CONF_INCLUDE}
+  ${VGG_CONTRIB_LIBJPG_INCLUDE}
+  ${VGG_CONTRIB_LIBJPG_CONF_INCLUDE}
 )
-target_link_libraries(contrib_test minifb zlib libzstd_shared quickjs png)
+target_link_libraries(contrib_test minifb zlib libzstd_shared quickjs png jpeg)

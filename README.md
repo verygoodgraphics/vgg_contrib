@@ -6,7 +6,7 @@ Some rules for each library:
 
 - Source-code only, no binaries, no submodules, no fetching scripts. Just code.
   - If the library is header-only, then a pre-built single-header file is prefered,
-  - Otherwise the original library root is included.
+  - Otherwise the library directory is included.
 - Dependencies of a library should be flattened out as other libraries in this repo
 - The original code lies in `upstream` directory, with modifications if neccessary
 - The modifications to the original code lie in `patches` directory
@@ -23,10 +23,12 @@ Some rules for each library:
 | [minifb](https://github.com/emoon/minifb)       | MIT                                                          | [5312cb](https://github.com/emoon/minifb/commit/5312cb7ca07115c918148131d296864b8d67e2d7) | window      | directory      |
 | [quickjs](https://github.com/bellard/quickjs)   | MIT                                                          | [2788d7](https://github.com/bellard/quickjs/commit/2788d71e823b522b178db3b3660ce93689534e6d) | js      | directory      |
 | [libpng](https://sourceforge.net/projects/libpng/) | [Custom](http://www.libpng.org/pub/png/src/libpng-LICENSE.txt) | [1.6.38](https://sourceforge.net/projects/libpng/files/libpng16/1.6.38/) | image       | directory      |
+| [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) | [Custom](https://github.com/libjpeg-turbo/libjpeg-turbo/blob/main/LICENSE.md) | [2.1.4](https://github.com/libjpeg-turbo/libjpeg-turbo/releases/tag/2.1.4) | image | directory |
+|  |  |  |  |  |
 
 ## How to use
 
-Please first download this repo into your project, using whatever methods you like (for example, using `git submodule` or just a source code copy), and keep in your favorite place, for example, a folder in project root called `vgg_contrib`.
+Please first download this repo into your project, using whatever methods you like (for example, using recommended `git submodule` or just a source code copy), and keep it in your favorite place, for example, a folder in project root called `vgg_contrib`.
 
 ### Per-library usage
 
@@ -52,16 +54,18 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 
 ### Library usage summary
 
-| Name        | Include Path                                                 | Link Target                                        |
-| ----------- | ------------------------------------------------------------ | -------------------------------------------------- |
-| json        | `VGG_CONTRIB_JSON_INCLUDE`                                   | N/A                                                |
-| picosha2    | `VGG_CONTRIB_PICOSHA2_INCLUDE`                               | N/A                                                |
-| sdefl/sinfl | `VGG_CONTRIB_SDEFL_INCLUDE`                                  | N/A                                                |
-| zlib        | `VGG_CONTRIB_ZLIB_INCLUDE`<br />`VGG_CONTRIB_ZLIB_CONF_INCLUDE` | shared: `zlib`, static: `zlibstatic`               |
-| zstd        | `VGG_CONTRIB_ZSTD_INCLUDE`                                   | shared: `libzstd_shared`, static: `libzstd_static` |
-| minifb      | `VGG_CONTRIB_MINIFB_INCLUDE`                                 | static: `minifb`                                   |
-| quickjs     | `VGG_CONTRIB_QUICKJS_INCLUDE`                                | static: `quickjs`                                  |
-| libpng      | `VGG_CONTRIB_LIBPNG_INCLUDE`<br />`VGG_CONTRIB_LIBPNG_CONF_INCLUDE` | shared: `png`, static: `png_static`                |
+| Name          | Include Path                                                 | Link Target                                        |
+| ------------- | ------------------------------------------------------------ | -------------------------------------------------- |
+| json          | `VGG_CONTRIB_JSON_INCLUDE`                                   | N/A                                                |
+| picosha2      | `VGG_CONTRIB_PICOSHA2_INCLUDE`                               | N/A                                                |
+| sdefl/sinfl   | `VGG_CONTRIB_SDEFL_INCLUDE`                                  | N/A                                                |
+| zlib          | `VGG_CONTRIB_ZLIB_INCLUDE`<br />`VGG_CONTRIB_ZLIB_CONF_INCLUDE` | shared: `zlib`, static: `zlibstatic`               |
+| zstd          | `VGG_CONTRIB_ZSTD_INCLUDE`                                   | shared: `libzstd_shared`, static: `libzstd_static` |
+| minifb        | `VGG_CONTRIB_MINIFB_INCLUDE`                                 | static: `minifb`                                   |
+| quickjs       | `VGG_CONTRIB_QUICKJS_INCLUDE`                                | static: `quickjs`                                  |
+| libpng        | `VGG_CONTRIB_LIBPNG_INCLUDE`<br />`VGG_CONTRIB_LIBPNG_CONF_INCLUDE` | shared: `png`, static: `png_static`                |
+| libjpeg-turbo | `VGG_CONTRIB_LIBJPG_INCLUDE`<br />`VGG_CONTRIB_LIBJPG_CONF_INCLUDE` | shared: `jpeg`, static: `jpeg-static`              |
+|               |                                                              |                                                    |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
@@ -113,7 +117,7 @@ In this project, we assume all the code in `upstream` directory is already patch
 Take the `sdefl` library for example. Say we have made changes to `upstream/sinfl.h` **in place**, and the original code have been copied as the `original` folder. We could use the following command to make a new patch
 
 ```bash
-diff -u original/ upstream/ > patches/00-patch.applied
+diff -ru original/ upstream/ > patches/00-patch.applied
 ```
 
 ### How to apply a patch
