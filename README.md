@@ -24,7 +24,7 @@ Some rules for each library:
 | [quickjs](https://github.com/bellard/quickjs)   | MIT                                                          | [2788d7](https://github.com/bellard/quickjs/commit/2788d71e823b522b178db3b3660ce93689534e6d) | js      | directory      |
 | [libpng](https://sourceforge.net/projects/libpng/) | [Custom](http://www.libpng.org/pub/png/src/libpng-LICENSE.txt) | [1.6.38](https://sourceforge.net/projects/libpng/files/libpng16/1.6.38/) | image       | directory      |
 | [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) | [Custom](https://github.com/libjpeg-turbo/libjpeg-turbo/blob/main/LICENSE.md) | [2.1.4](https://github.com/libjpeg-turbo/libjpeg-turbo/releases/tag/2.1.4) | image | directory |
-|  |  |  |  |  |
+| [libwebp](https://github.com/webmproject/libwebp) | BSD | [1.2.4](https://github.com/webmproject/libwebp/tree/v1.2.4) | image | directory |
 
 ## How to use
 
@@ -65,7 +65,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | quickjs       | `VGG_CONTRIB_QUICKJS_INCLUDE`                                | static: `quickjs`                                  |
 | libpng        | `VGG_CONTRIB_LIBPNG_INCLUDE`<br />`VGG_CONTRIB_LIBPNG_CONF_INCLUDE` | shared: `png`, static: `png_static`                |
 | libjpeg-turbo | `VGG_CONTRIB_LIBJPG_INCLUDE`<br />`VGG_CONTRIB_LIBJPG_CONF_INCLUDE` | shared: `jpeg`, static: `jpeg-static`              |
-|               |                                                              |                                                    |
+| libwebp       | `VGG_CONTRIB_LIBWEBP_INCLUDE`<br />`VGG_CONTRIB_LIBWEBP_CONF_INCLUDE` | static: `webp`                                     |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
