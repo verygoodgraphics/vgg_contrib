@@ -29,13 +29,11 @@ target_compile_options(quickjs PRIVATE
 )
 elseif(NOT MSVC)
 target_compile_options(quickjs PRIVATE
-  -Wno-discarded-qualifiers 
-  -Wno-unused-result
-)
+  -Wno-discarded-qualifiers -Wno-unused-result)
 endif()
 
 if(MSVC)
-  target_compile_definitions(quickjs PRIVATE JS_STRICT_NAN_BOXING)
+  target_compile_definitions(quickjs PUBLIC JS_STRICT_NAN_BOXING)
 endif()
 
 set(VGG_CONTRIB_QUICKJS_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/upstream CACHE PATH "" FORCE)
