@@ -13,19 +13,24 @@ set(QJS_SRCS
 add_library(quickjs STATIC ${QJS_SRCS})
 target_compile_options(quickjs PRIVATE
   -D_GNU_SOURCE
-  -DCONFIG_VERSION="2021-03-27"
   -DCONFIG_BIGNUM
   -DDUMP_LEAKS
 )
 
 if (APPLE)
-target_compile_options(quickjs PRIVATE
-  -Wno-incompatible-pointer-types-discards-qualifiers
-)
+  target_compile_options(quickjs PRIVATE
+    -Wno-incompatible-pointer-types-discards-qualifiers
+  )
+elseif(MSVC)
+  target_compile_definitions(quickjs PUBLIC JS_STRICT_NAN_BOXING)
+
+  target_compile_options(quickjs PRIVATE /wd"4267" /wd"4244" /wd"4018" 
+    /wd"4101" /wd"4146" /wd"4013" /wd"4334" /wd"4996"
+    )
 else()
-target_compile_options(quickjs PRIVATE
-  -Wno-discarded-qualifiers
-)
+  target_compile_options(quickjs PRIVATE
+    -Wno-discarded-qualifiers -Wno-unused-result
+    )
 endif()
 
 set(VGG_CONTRIB_QUICKJS_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/upstream CACHE PATH "" FORCE)
