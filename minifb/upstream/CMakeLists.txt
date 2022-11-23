@@ -178,6 +178,8 @@ else()
     # Force Visual Studio to actualize __cplusplus version macro
     add_compile_options(/Zc:__cplusplus)
 
+    # Remove type conversion warning
+    add_compile_options(/wd"4244")
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
