@@ -5,6 +5,7 @@ project(vgg_contrib_zlib)
 if (APPLE)
   set(CMAKE_MACOSX_RPATH ON)
 endif()
+set(ZLIB_ENABLE_EXAMPLE OFF)
 add_subdirectory(upstream)
 
 set(VGG_CONTRIB_ZLIB_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/upstream CACHE PATH "" FORCE)
