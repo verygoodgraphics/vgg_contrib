@@ -1,0 +1,56 @@
+diff -ru original/CMakeLists.txt upstream/CMakeLists.txt
+index b412dc7..58b9a64 100644
+--- original/CMakeLists.txt
++++ upstream/CMakeLists.txt
+@@ -177,6 +177,7 @@ endif()
+ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
+     install(TARGETS zlib zlibstatic
+         RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
++
+         ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
+         LIBRARY DESTINATION "${INSTALL_LIB_DIR}" )
+ endif()
+@@ -194,20 +195,26 @@ endif()
+ # Example binaries
+ #============================================================================
+ 
+-add_executable(example test/example.c)
+-target_link_libraries(example zlib)
+-add_test(example example)
+-
+-add_executable(minigzip test/minigzip.c)
+-target_link_libraries(minigzip zlib)
+-
+-if(HAVE_OFF64_T)
+-    add_executable(example64 test/example.c)
+-    target_link_libraries(example64 zlib)
+-    set_target_properties(example64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+-    add_test(example64 example64)
+-
+-    add_executable(minigzip64 test/minigzip.c)
+-    target_link_libraries(minigzip64 zlib)
+-    set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
+-endif()
++if (ZLIB_ENABLE_EXAMPLE)
++  add_executable(example test/example.c)
++  target_include_directories(example PRIVATE "${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_BINARY_DIR}")
++  target_link_libraries(example zlib)
++  add_test(example example)
++  
++  add_executable(minigzip test/minigzip.c)
++  target_include_directories(minigzip PRIVATE "${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_BINARY_DIR}")
++  target_link_libraries(minigzip zlib)
++  
++  if(HAVE_OFF64_T)
++      add_executable(example64 test/example.c)
++      target_link_libraries(example64 zlib)
++      target_include_directories(example64 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_BINARY_DIR}")
++      set_target_properties(example64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
++      add_test(example64 example64)
++  
++      add_executable(minigzip64 test/minigzip.c)
++      target_include_directories(minigzip64 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_BINARY_DIR}")
++      target_link_libraries(minigzip64 zlib)
++      set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
++  endif()
++ endif()
