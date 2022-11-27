@@ -1,0 +1,37 @@
+--- original/quickjs/quickjs-atom.h	2022-11-18 18:50:21.000000000 +0800
++++ upstream/quickjs/quickjs-atom.h	2022-11-27 09:15:32.000000000 +0800
+@@ -55,6 +55,8 @@
+ DEF(function, "function")
+ DEF(debugger, "debugger")
+ DEF(with, "with")
++DEF(__file__, "__FILE__")
++DEF(__dir__, "__DIR__")
+ /* FutureReservedWord */
+ DEF(class, "class")
+ DEF(const, "const")
+@@ -79,6 +81,7 @@
+ DEF(empty_string, "")
+ /* identifiers */
+ DEF(length, "length")
++DEF(tag, "tag")
+ DEF(fileName, "fileName")
+ DEF(lineNumber, "lineNumber")
+ DEF(message, "message")
+@@ -224,6 +227,9 @@
+ DEF(OperatorSet, "OperatorSet")
+ DEF(Operators, "Operators")
+ #endif
++#ifdef CONFIG_JSX
++DEF(JSX, "JSX")
++#endif
+ DEF(Map, "Map")
+ DEF(Set, "Set") /* Map + 1 */
+ DEF(WeakMap, "WeakMap") /* Map + 2 */
+@@ -270,4 +276,7 @@
+ DEF(Symbol_operatorSet, "Symbol.operatorSet")
+ #endif
+     
++DEF(Symbol_tag, "Symbol.tag")
++
++    
+ #endif /* DEF */
