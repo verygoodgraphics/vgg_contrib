@@ -1,8 +1,8 @@
 /*
  * QuickJS Javascript Engine
  *
- * Copyright (c) 2017-2020 Fabrice Bellard
- * Copyright (c) 2017-2020 Charlie Gordon
+ * Copyright (c) 2017-2021 Fabrice Bellard
+ * Copyright (c) 2017-2021 Charlie Gordon
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -82,9 +82,9 @@ typedef struct JSRefCountHeader {
 
 #define JS_FLOAT64_NAN NAN
 
-#if defined(JS_STRICT_NAN_BOXING) 
+#if defined(JS_STRICT_NAN_BOXING)
 
-  // This schema defines strict NAN boxing for both 32 and 64 versions 
+  // This schema defines strict NAN boxing for both 32 and 64 versions
 
   // This is a method of storing values in the IEEE 754 double-precision
   // floating-point number. double type is 64-bit, comprised of 1 sign bit, 11
@@ -95,10 +95,10 @@ typedef struct JSRefCountHeader {
 
   // s0000000|0000tttt|vvvvvvvv|vvvvvvvv|vvvvvvvv|vvvvvvvv|vvvvvvvv|vvvvvvvv
   // NaN marker   |tag|  48-bit placeholder for values: pointers, strings
-  // all bits 0   | 4 |  
-  // for non float|bit|  
+  // all bits 0   | 4 |
+  // for non float|bit|
 
-  // Doubles contain non-zero in NaN marker field and are stored with bits inversed 
+  // Doubles contain non-zero in NaN marker field and are stored with bits inversed
 
   // JS_UNINITIALIZED is strictly uint64_t(0)
 
@@ -157,7 +157,7 @@ typedef struct JSRefCountHeader {
       return JS_FLOAT64_NAN;
     else if (v == JS_INFINITY_POSITIVE)
       return INFINITY;
-    else 
+    else
       return -INFINITY;
   }
 
@@ -249,7 +249,7 @@ static inline JS_BOOL JS_VALUE_IS_NAN(JSValue v)
 {
     return 0;
 }
-    
+
 #elif defined(JS_NAN_BOXING)
 
 typedef uint64_t JSValue;
@@ -314,7 +314,7 @@ static inline JS_BOOL JS_VALUE_IS_NAN(JSValue v)
     tag = JS_VALUE_GET_TAG(v);
     return tag == (JS_NAN >> 32);
 }
-    
+
 #else /* !JS_NAN_BOXING */
 
 typedef union JSValueUnion {
@@ -944,8 +944,6 @@ JSValue JS_Eval(JSContext *ctx, const char *input, size_t input_len,
                 const char *filename, int eval_flags);
 JSValue JS_Eval2(JSContext *ctx, const char *input, size_t input_len,
                 const char *filename, int eval_flags, int line_no);
-
-JSValue JS_EvalFunction(JSContext *ctx, JSValue fun_obj);
 /* same as JS_Eval() but with an explicit 'this_obj' parameter */
 JSValue JS_EvalThis(JSContext *ctx, JSValueConst this_obj,
                     const char *input, size_t input_len,
@@ -1059,7 +1057,9 @@ uint8_t *JS_WriteObject2(JSContext *ctx, size_t *psize, JSValueConst obj,
 #define JS_READ_OBJ_REFERENCE (1 << 3) /* allow object references */
 JSValue JS_ReadObject(JSContext *ctx, const uint8_t *buf, size_t buf_len, int flags);
 JSValue JS_ReadObject2(JSContext *ctx, const uint8_t *buf, size_t buf_len, int flags, size_t* remnants_len);
-
+/* instantiate and evaluate a bytecode function. Only used when
+   reading a script or module with JS_ReadObject() */
+JSValue JS_EvalFunction(JSContext *ctx, JSValue fun_obj);
 /* load the dependencies of the module 'obj'. Useful when JS_ReadObject()
    returns a module. */
 int JS_ResolveModule(JSContext *ctx, JSValueConst obj);
@@ -1125,7 +1125,7 @@ static inline JSValue JS_NewCFunctionMagic(JSContext *ctx, JSCFunctionMagic *fun
 {
     return JS_NewCFunction2(ctx, (JSCFunction *)func, name, length, cproto, magic);
 }
-void JS_SetConstructor(JSContext *ctx, JSValueConst func_obj, 
+void JS_SetConstructor(JSContext *ctx, JSValueConst func_obj,
                        JSValueConst proto);
 
 /* C property definition */
