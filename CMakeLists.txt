@@ -12,6 +12,7 @@ add_subdirectory(quickjs)
 add_subdirectory(libpng)
 add_subdirectory(libjpeg-turbo)
 add_subdirectory(libwebp)
+add_subdirectory(boost)
 
 # Debug info
 message(STATUS "VGG_CONTRIB_JSON_INCLUDE: " ${VGG_CONTRIB_JSON_INCLUDE})
@@ -28,6 +29,7 @@ message(STATUS "VGG_CONTRIB_LIBJPG_INCLUDE: " ${VGG_CONTRIB_LIBJPG_INCLUDE})
 message(STATUS "VGG_CONTRIB_LIBJPG_CONF_INCLUDE: " ${VGG_CONTRIB_LIBJPG_CONF_INCLUDE})
 message(STATUS "VGG_CONTRIB_LIBWEBP_INCLUDE: " ${VGG_CONTRIB_LIBWEBP_INCLUDE})
 message(STATUS "VGG_CONTRIB_LIBWEBP_CONF_INCLUDE: " ${VGG_CONTRIB_LIBWEBP_CONF_INCLUDE})
+message(STATUS "VGG_CONTRIB_BOOST_INCLUDE: " ${VGG_CONTRIB_BOOST_INCLUDE})
 
 # Integration
 set(VGG_CONTRIB_INCLUDE "\
@@ -45,6 +47,7 @@ ${VGG_CONTRIB_LIBJPG_INCLUDE};\
 ${VGG_CONTRIB_LIBJPG_CONF_INCLUDE};\
 ${VGG_CONTRIB_LIBWEBP_INCLUDE};\
 ${VGG_CONTRIB_LIBWEBP_CONF_INCLUDE};\
+${VGG_CONTRIB_BOOST_INCLUDE};\
 "
   CACHE STRING "" FORCE)
 mark_as_advanced(VGG_CONTRIB_INCLUDE)
@@ -70,5 +73,6 @@ target_include_directories(contrib_test PRIVATE
   ${VGG_CONTRIB_LIBJPG_CONF_INCLUDE}
   ${VGG_CONTRIB_LIBWEBP_INCLUDE}
   ${VGG_CONTRIB_LIBWEBP_CONF_INCLUDE}
+  ${VGG_CONTRIB_BOOST_INCLUDE}
 )
-target_link_libraries(contrib_test minifb zlib libzstd_shared quickjs png jpeg webp)
+target_link_libraries(contrib_test minifb zlib libzstd_shared quickjs png jpeg webp boost_locale)
