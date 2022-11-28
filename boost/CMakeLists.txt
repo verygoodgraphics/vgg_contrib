@@ -3,8 +3,9 @@ project(vgg_contrib_boost)
 
 # project-wide configs
 set(boost_prefix upstream/boost_1_80_0)
-add_compile_definitions(BOOST_ALL_NO_LIB)
-add_compile_options(-Wno-deprecated-declarations)
+if (NOT MSVC)
+  add_compile_options(-Wno-deprecated-declarations)
+endif()
 include_directories(${boost_prefix})
 
 # for boost-locale
