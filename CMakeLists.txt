@@ -13,6 +13,7 @@ add_subdirectory(libpng)
 add_subdirectory(libjpeg-turbo)
 add_subdirectory(libwebp)
 add_subdirectory(boost)
+add_subdirectory(wasmtime-cpp)
 
 # Debug info
 message(STATUS "VGG_CONTRIB_JSON_INCLUDE: " ${VGG_CONTRIB_JSON_INCLUDE})
@@ -30,6 +31,7 @@ message(STATUS "VGG_CONTRIB_LIBJPG_CONF_INCLUDE: " ${VGG_CONTRIB_LIBJPG_CONF_INC
 message(STATUS "VGG_CONTRIB_LIBWEBP_INCLUDE: " ${VGG_CONTRIB_LIBWEBP_INCLUDE})
 message(STATUS "VGG_CONTRIB_LIBWEBP_CONF_INCLUDE: " ${VGG_CONTRIB_LIBWEBP_CONF_INCLUDE})
 message(STATUS "VGG_CONTRIB_BOOST_INCLUDE: " ${VGG_CONTRIB_BOOST_INCLUDE})
+message(STATUS "VGG_CONTRIB_WASMTIME_INCLUDE: " ${VGG_CONTRIB_WASMTIME_INCLUDE})
 
 # Integration
 set(VGG_CONTRIB_INCLUDE "\
@@ -55,7 +57,7 @@ mark_as_advanced(VGG_CONTRIB_INCLUDE)
 # Test
 add_executable(contrib_test test.cc)
 set_target_properties(contrib_test PROPERTIES
-  CXX_STANDARD 11
+  CXX_STANDARD 17
 )
 # target_include_directories(contrib_test PRIVATE ${VGG_CONTRIB_INCLUDE})
 target_include_directories(contrib_test PRIVATE
@@ -74,5 +76,6 @@ target_include_directories(contrib_test PRIVATE
   ${VGG_CONTRIB_LIBWEBP_INCLUDE}
   ${VGG_CONTRIB_LIBWEBP_CONF_INCLUDE}
   ${VGG_CONTRIB_BOOST_INCLUDE}
+  ${VGG_CONTRIB_WASMTIME_INCLUDE}
 )
-target_link_libraries(contrib_test minifb zlib libzstd_shared quickjs png jpeg webp boost_locale)
+target_link_libraries(contrib_test minifb zlib libzstd_shared quickjs png jpeg webp boost_locale wasmtime-cpp)
