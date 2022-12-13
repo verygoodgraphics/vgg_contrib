@@ -26,6 +26,7 @@ Some rules for each library:
 | [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) | [Custom](https://github.com/libjpeg-turbo/libjpeg-turbo/blob/main/LICENSE.md) | [2.1.4](https://github.com/libjpeg-turbo/libjpeg-turbo/releases/tag/2.1.4) | image | directory |
 | [libwebp](https://github.com/webmproject/libwebp) | BSD | [1.2.4](https://github.com/webmproject/libwebp/tree/v1.2.4) | image | directory |
 | [boost](https://www.boost.org/) | [Boost](https://www.boost.org/users/license.html) | [1.80.0](https://www.boost.org/users/history/version_1_80_0.html) | common | directory |
+| [wasmtime-cpp](https://github.com/bytecodealliance/wasmtime-cpp) | Apache-2.0 | [d3ffaa](https://github.com/bytecodealliance/wasmtime-cpp/tree/d3ffaa92eec9e6333ff84b93de92de90cebe633b) | WebAssembly | directory |
 
 ## How to use
 
@@ -68,6 +69,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | libjpeg-turbo | `VGG_CONTRIB_LIBJPG_INCLUDE`<br />`VGG_CONTRIB_LIBJPG_CONF_INCLUDE` | shared: `jpeg`, static: `jpeg-static`                |
 | libwebp       | `VGG_CONTRIB_LIBWEBP_INCLUDE`<br />`VGG_CONTRIB_LIBWEBP_CONF_INCLUDE` | static: `webp`                                       |
 | boost         | `VGG_CONTRIB_BOOST_INCLUDE`                                  | static libs, see boost's [README](./boost/README.md) |
+| wasmtime-cpp         | `VGG_CONTRIB_WASMTIME_INCLUDE `                                  | static: `wasmtime-cpp` |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
