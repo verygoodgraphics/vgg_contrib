@@ -1,16 +1,22 @@
-Only in upstream: .DS_Store
-Only in /Users/houguanhua/Downloads/wasmtime-cpp-main: .github
-Only in /Users/houguanhua/Downloads/wasmtime-cpp-main: .gitignore
-diff -ru /Users/houguanhua/Downloads/wasmtime-cpp-main/CMakeLists.txt upstream/CMakeLists.txt
---- /Users/houguanhua/Downloads/wasmtime-cpp-main/CMakeLists.txt	2022-11-15 23:02:23
-+++ upstream/CMakeLists.txt	2022-12-12 10:13:59
+diff -ru original/CMakeLists.txt upstream/CMakeLists.txt
+--- original/CMakeLists.txt	2022-12-19 10:39:46.000000000 +0800
++++ upstream/CMakeLists.txt	2022-12-19 10:42:26.000000000 +0800
 @@ -20,7 +20,7 @@
     add_compile_options (-fcolor-diagnostics)
  endif ()
- 
+
 -add_library(wasmtime-cpp INTERFACE ${CMAKE_SOURCE_DIR}/include/wasmtime.hh)
 +add_library(wasmtime-cpp INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include/wasmtime.hh)
  target_link_libraries(wasmtime-cpp INTERFACE wasmtime)
  if (MSVC)
    target_compile_options(wasmtime-cpp INTERFACE /DWASM_API_EXTERN= /DWASI_API_EXTERN=)
-Only in upstream: c-api
+@@ -36,6 +36,6 @@
+         ${PROJECT_SOURCE_DIR}/c-api/include)
+ target_link_directories(wasmtime-cpp INTERFACE ${PROJECT_SOURCE_DIR}/c-api/lib)
+
+-enable_testing()
+-add_subdirectory(examples)
+-add_subdirectory(tests)
++# enable_testing()
++# add_subdirectory(examples)
++# add_subdirectory(tests)

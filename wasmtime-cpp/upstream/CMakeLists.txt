@@ -36,6 +36,6 @@ target_include_directories(
         ${PROJECT_SOURCE_DIR}/c-api/include)
 target_link_directories(wasmtime-cpp INTERFACE ${PROJECT_SOURCE_DIR}/c-api/lib)
 
-enable_testing()
-add_subdirectory(examples)
-add_subdirectory(tests)
+# enable_testing()
+# add_subdirectory(examples)
+# add_subdirectory(tests)
