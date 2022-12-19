@@ -16,17 +16,17 @@ Some rules for each library:
 | Name                                            | License                                                      | Included Version                                             | Category    | Inclusion Type |
 | ----------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ----------- | -------------- |
 | [json](https://github.com/nlohmann/json)        | MIT                                                          | [3.11.2](https://github.com/nlohmann/json/releases/tag/v3.11.2) | json        | single header  |
-| [picosha2](https://github.com/okdshin/PicoSHA2) | MIT                                                          | [7bfa26](https://github.com/okdshin/PicoSHA2/commit/7bfa26156981f7181f240906495a2c33c7fa48be) | hashing     | single header  |
-| [sdefl/sinfl](https://github.com/vurtun/lib)    | MIT/Public Domain                                            | [71382a](https://github.com/vurtun/lib/commit/71382a1d14dad58219e7f6634d2381fa30dab175) | compression | single header  |
+| [picosha2](https://github.com/okdshin/PicoSHA2) | MIT                                                          | [7bfa26](https://github.com/okdshin/PicoSHA2/tree/7bfa26156981f7181f240906495a2c33c7fa48be) | hashing     | single header  |
+| [sdefl/sinfl](https://github.com/vurtun/lib)    | MIT/Public Domain                                            | [71382a](https://github.com/vurtun/lib/tree/71382a1d14dad58219e7f6634d2381fa30dab175) | compression | single header  |
 | [zlib](https://github.com/madler/zlib)          | [Custom](https://github.com/madler/zlib/blob/master/LICENSE) | [1.2.13](https://github.com/madler/zlib/releases/tag/v1.2.13) | compression | directory      |
 | [zstd](https://github.com/facebook/zstd)        | BSD/GPLv2                                                    | [1.5.2](https://github.com/facebook/zstd/releases/tag/v1.5.2) | compression | directory      |
-| [minifb](https://github.com/emoon/minifb)       | MIT                                                          | [5312cb](https://github.com/emoon/minifb/commit/5312cb7ca07115c918148131d296864b8d67e2d7) | window      | directory      |
-| [quickjs](https://github.com/bellard/quickjs)   | MIT                                                          | [2788d7](https://github.com/bellard/quickjs/commit/2788d71e823b522b178db3b3660ce93689534e6d) | js      | directory      |
+| [minifb](https://github.com/emoon/minifb)       | MIT                                                          | [5312cb](https://github.com/emoon/minifb/tree/5312cb7ca07115c918148131d296864b8d67e2d7) | window      | directory      |
+| [quickjs](https://github.com/bellard/quickjs)   | MIT                                                          | [2788d7](https://github.com/bellard/quickjs/tree/2788d71e823b522b178db3b3660ce93689534e6d) | js      | directory      |
 | [libpng](https://sourceforge.net/projects/libpng/) | [Custom](http://www.libpng.org/pub/png/src/libpng-LICENSE.txt) | [1.6.38](https://sourceforge.net/projects/libpng/files/libpng16/1.6.38/) | image       | directory      |
 | [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) | [Custom](https://github.com/libjpeg-turbo/libjpeg-turbo/blob/main/LICENSE.md) | [2.1.4](https://github.com/libjpeg-turbo/libjpeg-turbo/releases/tag/2.1.4) | image | directory |
-| [libwebp](https://github.com/webmproject/libwebp) | BSD | [1.2.4](https://github.com/webmproject/libwebp/tree/v1.2.4) | image | directory |
+| [libwebp](https://github.com/webmproject/libwebp) | BSD | [1.2.4](https://github.com/webmproject/libwebp/releases/tag/v1.2.4) | image | directory |
 | [boost](https://www.boost.org/) | [Boost](https://www.boost.org/users/license.html) | [1.80.0](https://www.boost.org/users/history/version_1_80_0.html) | common | directory |
-| [wasmtime-cpp](https://github.com/bytecodealliance/wasmtime-cpp) | Apache-2.0 | [d3ffaa](https://github.com/bytecodealliance/wasmtime-cpp/tree/d3ffaa92eec9e6333ff84b93de92de90cebe633b) | WebAssembly | directory |
+| [wasmtime-cpp](https://github.com/bytecodealliance/wasmtime-cpp) | Apache-2.0 | [e9690b](https://github.com/bytecodealliance/wasmtime-cpp/tree/e9690b1ded66ca6e31a5ad2629d605fa6cb1e966) | WebAssembly | directory |
 
 ## How to use
 
