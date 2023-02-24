@@ -60,14 +60,16 @@ add_subdirectory(${boost_prefix}/libs/rational)
 add_subdirectory(${boost_prefix}/libs/mp11)
 add_subdirectory(${boost_prefix}/libs/locale)
 
-# for boost-asio and boost-beast
-add_subdirectory(${boost_prefix}/libs/context)
-add_subdirectory(${boost_prefix}/libs/coroutine)
-add_subdirectory(${boost_prefix}/libs/endian)
-add_subdirectory(${boost_prefix}/libs/logic)
-add_subdirectory(${boost_prefix}/libs/pool)
-add_subdirectory(${boost_prefix}/libs/asio)
-add_subdirectory(${boost_prefix}/libs/beast)
+if (NOT EMSCRIPTEN)
+  # for boost-asio and boost-beast
+  add_subdirectory(${boost_prefix}/libs/context)
+  add_subdirectory(${boost_prefix}/libs/coroutine)
+  add_subdirectory(${boost_prefix}/libs/endian)
+  add_subdirectory(${boost_prefix}/libs/logic)
+  add_subdirectory(${boost_prefix}/libs/pool)
+  add_subdirectory(${boost_prefix}/libs/asio)
+  add_subdirectory(${boost_prefix}/libs/beast)
+endif()
 
 # setup cache variable for global use
 set(VGG_CONTRIB_BOOST_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/${boost_prefix} CACHE PATH "" FORCE)
