@@ -21,12 +21,10 @@ Some rules for each library:
 | [zlib](https://github.com/madler/zlib)          | [Custom](https://github.com/madler/zlib/blob/master/LICENSE) | [1.2.13](https://github.com/madler/zlib/releases/tag/v1.2.13) | compression | directory      |
 | [zstd](https://github.com/facebook/zstd)        | BSD/GPLv2                                                    | [1.5.2](https://github.com/facebook/zstd/releases/tag/v1.5.2) | compression | directory      |
 | [minifb](https://github.com/emoon/minifb)       | MIT                                                          | [5312cb](https://github.com/emoon/minifb/tree/5312cb7ca07115c918148131d296864b8d67e2d7) | window      | directory      |
-| [quickjs](https://github.com/bellard/quickjs)   | MIT                                                          | [2788d7](https://github.com/bellard/quickjs/tree/2788d71e823b522b178db3b3660ce93689534e6d) | js      | directory      |
 | [libpng](https://sourceforge.net/projects/libpng/) | [Custom](http://www.libpng.org/pub/png/src/libpng-LICENSE.txt) | [1.6.38](https://sourceforge.net/projects/libpng/files/libpng16/1.6.38/) | image       | directory      |
 | [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) | [Custom](https://github.com/libjpeg-turbo/libjpeg-turbo/blob/main/LICENSE.md) | [2.1.4](https://github.com/libjpeg-turbo/libjpeg-turbo/releases/tag/2.1.4) | image | directory |
 | [libwebp](https://github.com/webmproject/libwebp) | BSD | [1.2.4](https://github.com/webmproject/libwebp/releases/tag/v1.2.4) | image | directory |
 | [boost](https://www.boost.org/) | [Boost](https://www.boost.org/users/license.html) | [1.80.0](https://www.boost.org/users/history/version_1_80_0.html) | common | directory |
-| [wasmtime-cpp](https://github.com/bytecodealliance/wasmtime-cpp) | Apache-2.0 | [e9690b](https://github.com/bytecodealliance/wasmtime-cpp/tree/e9690b1ded66ca6e31a5ad2629d605fa6cb1e966) | WebAssembly | directory |
 
 ## How to use
 
@@ -64,12 +62,10 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | zlib          | `VGG_CONTRIB_ZLIB_INCLUDE`<br />`VGG_CONTRIB_ZLIB_CONF_INCLUDE` | shared: `zlib`, static: `zlibstatic`                 |
 | zstd          | `VGG_CONTRIB_ZSTD_INCLUDE`                                   | shared: `libzstd_shared`, static: `libzstd_static`   |
 | minifb        | `VGG_CONTRIB_MINIFB_INCLUDE`                                 | static: `minifb`                                     |
-| quickjs       | `VGG_CONTRIB_QUICKJS_INCLUDE`                                | static: `quickjs`                                    |
 | libpng        | `VGG_CONTRIB_LIBPNG_INCLUDE`<br />`VGG_CONTRIB_LIBPNG_CONF_INCLUDE` | shared: `png`, static: `png_static`                  |
 | libjpeg-turbo | `VGG_CONTRIB_LIBJPG_INCLUDE`<br />`VGG_CONTRIB_LIBJPG_CONF_INCLUDE` | shared: `jpeg`, static: `jpeg-static`                |
 | libwebp       | `VGG_CONTRIB_LIBWEBP_INCLUDE`<br />`VGG_CONTRIB_LIBWEBP_CONF_INCLUDE` | static: `webp`                                       |
 | boost         | `VGG_CONTRIB_BOOST_INCLUDE`                                  | static libs, see boost's [README](./boost/README.md) |
-| wasmtime-cpp         | `VGG_CONTRIB_WASMTIME_INCLUDE `                                  | static: `wasmtime-cpp` |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
