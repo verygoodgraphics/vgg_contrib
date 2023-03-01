@@ -1,0 +1,26 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f636734..d429d34 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -53,13 +53,15 @@ endif()
+ option(JSON_VALIDATOR_BUILD_TESTS    "Build tests"    ${JSON_VALIDATOR_IS_TOP_LEVEL})
+ option(JSON_VALIDATOR_BUILD_EXAMPLES "Build examples" ${JSON_VALIDATOR_IS_TOP_LEVEL})
+ 
+-if(NOT TARGET nlohmann_json::nlohmann_json)
+-    find_package(nlohmann_json REQUIRED)
+-endif()
++#if(NOT TARGET nlohmann_json::nlohmann_json)
++#    find_package(nlohmann_json REQUIRED)
++#endif()
++
++#target_link_libraries(
++#    nlohmann_json_schema_validator
++#    PUBLIC nlohmann_json::nlohmann_json)
+ 
+-target_link_libraries(
+-    nlohmann_json_schema_validator
+-    PUBLIC nlohmann_json::nlohmann_json)
++include_directories(${VGG_CONTRIB_JSON_INCLUDE})
+ 
+ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
+    "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
