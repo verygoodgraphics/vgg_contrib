@@ -25,7 +25,6 @@ Some rules for each library:
 | [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) | [Custom](https://github.com/libjpeg-turbo/libjpeg-turbo/blob/main/LICENSE.md) | [2.1.4](https://github.com/libjpeg-turbo/libjpeg-turbo/releases/tag/2.1.4) | image | directory |
 | [libwebp](https://github.com/webmproject/libwebp) | BSD | [1.2.4](https://github.com/webmproject/libwebp/releases/tag/v1.2.4) | image | directory |
 | [boost](https://www.boost.org/) | [Boost](https://www.boost.org/users/license.html) | [1.80.0](https://www.boost.org/users/history/version_1_80_0.html) | common | directory |
-| [json-schema-validator](https://github.com/pboettch/json-schema-validator) | MIT | [2.2.0](https://github.com/pboettch/json-schema-validator/releases/tag/2.2.0) | json | directory |
 
 ## How to use
 
@@ -55,19 +54,18 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 
 ### Library usage summary
 
-| Name                  | Include Path                                                 | Link Target                                          |
-| --------------------- | ------------------------------------------------------------ | ---------------------------------------------------- |
-| json                  | `VGG_CONTRIB_JSON_INCLUDE`                                   | N/A                                                  |
-| picosha2              | `VGG_CONTRIB_PICOSHA2_INCLUDE`                               | N/A                                                  |
-| sdefl/sinfl           | `VGG_CONTRIB_SDEFL_INCLUDE`                                  | N/A                                                  |
-| zlib                  | `VGG_CONTRIB_ZLIB_INCLUDE`<br />`VGG_CONTRIB_ZLIB_CONF_INCLUDE` | shared: `zlib`, static: `zlibstatic`                 |
-| zstd                  | `VGG_CONTRIB_ZSTD_INCLUDE`                                   | shared: `libzstd_shared`, static: `libzstd_static`   |
-| minifb                | `VGG_CONTRIB_MINIFB_INCLUDE`                                 | static: `minifb`                                     |
-| libpng                | `VGG_CONTRIB_LIBPNG_INCLUDE`<br />`VGG_CONTRIB_LIBPNG_CONF_INCLUDE` | shared: `png`, static: `png_static`                  |
-| libjpeg-turbo         | `VGG_CONTRIB_LIBJPG_INCLUDE`<br />`VGG_CONTRIB_LIBJPG_CONF_INCLUDE` | shared: `jpeg`, static: `jpeg-static`                |
-| libwebp               | `VGG_CONTRIB_LIBWEBP_INCLUDE`<br />`VGG_CONTRIB_LIBWEBP_CONF_INCLUDE` | static: `webp`                                       |
-| boost                 | `VGG_CONTRIB_BOOST_INCLUDE`                                  | static libs, see boost's [README](./boost/README.md) |
-| json-schema-validator | `VGG_CONTRIB_JSON_SCHEMA_VALIDATOR_INCLUDE`                  | static: `nlohmann_json_schema_validator`             |
+| Name          | Include Path                                                 | Link Target                                          |
+| ------------- | ------------------------------------------------------------ | ---------------------------------------------------- |
+| json          | `VGG_CONTRIB_JSON_INCLUDE`                                   | N/A                                                  |
+| picosha2      | `VGG_CONTRIB_PICOSHA2_INCLUDE`                               | N/A                                                  |
+| sdefl/sinfl   | `VGG_CONTRIB_SDEFL_INCLUDE`                                  | N/A                                                  |
+| zlib          | `VGG_CONTRIB_ZLIB_INCLUDE`<br />`VGG_CONTRIB_ZLIB_CONF_INCLUDE` | shared: `zlib`, static: `zlibstatic`                 |
+| zstd          | `VGG_CONTRIB_ZSTD_INCLUDE`                                   | shared: `libzstd_shared`, static: `libzstd_static`   |
+| minifb        | `VGG_CONTRIB_MINIFB_INCLUDE`                                 | static: `minifb`                                     |
+| libpng        | `VGG_CONTRIB_LIBPNG_INCLUDE`<br />`VGG_CONTRIB_LIBPNG_CONF_INCLUDE` | shared: `png`, static: `png_static`                  |
+| libjpeg-turbo | `VGG_CONTRIB_LIBJPG_INCLUDE`<br />`VGG_CONTRIB_LIBJPG_CONF_INCLUDE` | shared: `jpeg`, static: `jpeg-static`                |
+| libwebp       | `VGG_CONTRIB_LIBWEBP_INCLUDE`<br />`VGG_CONTRIB_LIBWEBP_CONF_INCLUDE` | static: `webp`                                       |
+| boost         | `VGG_CONTRIB_BOOST_INCLUDE`                                  | static libs, see boost's [README](./boost/README.md) |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
