@@ -1,2 +1,4 @@
 build*
 original
+.cache
+compile_commands.json
