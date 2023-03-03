@@ -13,6 +13,7 @@ add_subdirectory(libjpeg-turbo)
 add_subdirectory(libwebp)
 add_subdirectory(boost)
 add_subdirectory(valijson)
+add_subdirectory(zip)
 
 # Debug info
 message(STATUS "VGG_CONTRIB_JSON_INCLUDE: " ${VGG_CONTRIB_JSON_INCLUDE})
@@ -30,6 +31,7 @@ message(STATUS "VGG_CONTRIB_LIBWEBP_INCLUDE: " ${VGG_CONTRIB_LIBWEBP_INCLUDE})
 message(STATUS "VGG_CONTRIB_LIBWEBP_CONF_INCLUDE: " ${VGG_CONTRIB_LIBWEBP_CONF_INCLUDE})
 message(STATUS "VGG_CONTRIB_BOOST_INCLUDE: " ${VGG_CONTRIB_BOOST_INCLUDE})
 message(STATUS "VGG_CONTRIB_VALIJSON_INCLUDE: " ${VGG_CONTRIB_VALIJSON_INCLUDE})
+message(STATUS "VGG_CONTRIB_ZIP_INCLUDE: " ${VGG_CONTRIB_ZIP_INCLUDE})
 
 # Integration
 set(VGG_CONTRIB_INCLUDE "\
@@ -48,6 +50,7 @@ ${VGG_CONTRIB_LIBWEBP_INCLUDE};\
 ${VGG_CONTRIB_LIBWEBP_CONF_INCLUDE};\
 ${VGG_CONTRIB_BOOST_INCLUDE};\
 ${VGG_CONTRIB_VALIJSON_INCLUDE};\
+${VGG_CONTRIB_ZIP_INCLUDE};\
 "
   CACHE STRING "" FORCE)
 mark_as_advanced(VGG_CONTRIB_INCLUDE)
@@ -75,4 +78,4 @@ target_include_directories(contrib_test PRIVATE
   ${VGG_CONTRIB_BOOST_INCLUDE}
   ${VGG_CONTRIB_VALIJSON_INCLUDE}
 )
-target_link_libraries(contrib_test minifb zlib libzstd_shared png jpeg webp boost_locale)
+target_link_libraries(contrib_test minifb zlib libzstd_shared png jpeg webp boost_locale zip)
