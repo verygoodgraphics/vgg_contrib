@@ -26,6 +26,7 @@ Some rules for each library:
 | [libwebp](https://github.com/webmproject/libwebp) | BSD | [1.2.4](https://github.com/webmproject/libwebp/releases/tag/v1.2.4) | image | directory |
 | [boost](https://www.boost.org/) | [Boost](https://www.boost.org/users/license.html) | [1.80.0](https://www.boost.org/users/history/version_1_80_0.html) | common | directory |
 | [valijson](https://github.com/tristanpenman/valijson) | BSD | [1.0](https://github.com/tristanpenman/valijson/tree/v1.0) | json schema | single header |
+| [zip](https://github.com/kuba--/zip) | [UNLICENSE](https://github.com/kuba--/zip/blob/master/UNLICENSE) | [0.2.6](https://github.com/kuba--/zip/releases/tag/v0.2.6) | zip | directory |
 
 ## How to use
 
@@ -68,6 +69,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | libwebp       | `VGG_CONTRIB_LIBWEBP_INCLUDE`<br />`VGG_CONTRIB_LIBWEBP_CONF_INCLUDE` | static: `webp`                                       |
 | boost         | `VGG_CONTRIB_BOOST_INCLUDE`                                  | static libs, see boost's [README](./boost/README.md) |
 | json schema   | `VGG_CONTRIB_VALIJSON_INCLUDE`                               | N/A                                                  |
+| zip           | `VGG_CONTRIB_ZIP_INCLUDE`                                    | static:`zip`                                         |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
