@@ -25,7 +25,7 @@ Some rules for each library:
 | [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) | [Custom](https://github.com/libjpeg-turbo/libjpeg-turbo/blob/main/LICENSE.md) | [2.1.4](https://github.com/libjpeg-turbo/libjpeg-turbo/releases/tag/2.1.4) | image | directory |
 | [libwebp](https://github.com/webmproject/libwebp) | BSD | [1.2.4](https://github.com/webmproject/libwebp/releases/tag/v1.2.4) | image | directory |
 | [boost](https://www.boost.org/) | [Boost](https://www.boost.org/users/license.html) | [1.80.0](https://www.boost.org/users/history/version_1_80_0.html) | common | directory |
-| [valijson](https://github.com/tristanpenman/valijson) | BSD | [1.0](https://github.com/tristanpenman/valijson/tree/v1.0) | json schema | single header |
+| [valijson](https://github.com/tristanpenman/valijson) | BSD | [1.0](https://github.com/verygoodgraphics/valijson/tree/feature-vgg) | json schema | single header |
 | [zip](https://github.com/kuba--/zip) | [UNLICENSE](https://github.com/kuba--/zip/blob/master/UNLICENSE) | [0.2.6](https://github.com/kuba--/zip/releases/tag/v0.2.6) | zip | directory |
 
 ## How to use
