@@ -19,11 +19,11 @@ Some rules for each library:
 | [picosha2](https://github.com/okdshin/PicoSHA2) | MIT                                                          | [7bfa26](https://github.com/okdshin/PicoSHA2/tree/7bfa26156981f7181f240906495a2c33c7fa48be) | hashing     | single header  |
 | [sdefl/sinfl](https://github.com/vurtun/lib)    | MIT/Public Domain                                            | [71382a](https://github.com/vurtun/lib/tree/71382a1d14dad58219e7f6634d2381fa30dab175) | compression | single header  |
 | [zlib](https://github.com/madler/zlib)          | [Custom](https://github.com/madler/zlib/blob/master/LICENSE) | [1.2.13](https://github.com/madler/zlib/releases/tag/v1.2.13) | compression | directory      |
-| [zstd](https://github.com/facebook/zstd)        | BSD/GPLv2                                                    | [1.5.2](https://github.com/facebook/zstd/releases/tag/v1.5.2) | compression | directory      |
+| [zstd](https://github.com/facebook/zstd)        | BSD/GPLv2                                                    | [1.5.4](https://github.com/facebook/zstd/releases/tag/v1.5.4) | compression | directory      |
 | [minifb](https://github.com/emoon/minifb)       | MIT                                                          | [feature-vgg](https://github.com/verygoodgraphics/minifb/tree/feature-vgg) | window      | directory      |
-| [libpng](https://sourceforge.net/projects/libpng/) | [Custom](http://www.libpng.org/pub/png/src/libpng-LICENSE.txt) | [1.6.38](https://sourceforge.net/projects/libpng/files/libpng16/1.6.38/) | image       | directory      |
-| [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) | [Custom](https://github.com/libjpeg-turbo/libjpeg-turbo/blob/main/LICENSE.md) | [2.1.4](https://github.com/libjpeg-turbo/libjpeg-turbo/releases/tag/2.1.4) | image | directory |
-| [libwebp](https://github.com/webmproject/libwebp) | BSD | [1.2.4](https://github.com/webmproject/libwebp/releases/tag/v1.2.4) | image | directory |
+| [libpng](https://sourceforge.net/projects/libpng/) | [Custom](http://www.libpng.org/pub/png/src/libpng-LICENSE.txt) | [1.6.39](https://sourceforge.net/projects/libpng/files/libpng16/1.6.39/) | image       | directory      |
+| [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) | [Custom](https://github.com/libjpeg-turbo/libjpeg-turbo/blob/main/LICENSE.md) | [2.1.5.1](https://github.com/libjpeg-turbo/libjpeg-turbo/releases/tag/2.1.5.1) | image | directory |
+| [libwebp](https://github.com/webmproject/libwebp) | BSD | [1.3.0](https://github.com/webmproject/libwebp/releases/tag/v1.3.0) | image | directory |
 | [boost](https://www.boost.org/) | [Boost](https://www.boost.org/users/license.html) | [1.80.0](https://www.boost.org/users/history/version_1_80_0.html) | common | directory |
 | [valijson](https://github.com/tristanpenman/valijson) | BSD | [feature-vgg](https://github.com/verygoodgraphics/valijson/tree/feature-vgg) | json schema | single header |
 | [zip](https://github.com/kuba--/zip) | [UNLICENSE](https://github.com/kuba--/zip/blob/master/UNLICENSE) | [0.2.6](https://github.com/kuba--/zip/releases/tag/v0.2.6) | zip | directory |
