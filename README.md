@@ -28,6 +28,8 @@ Some rules for each library:
 | [valijson](https://github.com/tristanpenman/valijson) | BSD | [1.0](https://github.com/verygoodgraphics/valijson/tree/feature-vgg) | json schema | single header |
 | [zip](https://github.com/kuba--/zip) | [UNLICENSE](https://github.com/kuba--/zip/blob/master/UNLICENSE) | [0.2.6](https://github.com/kuba--/zip/releases/tag/v0.2.6) | zip | directory |
 
+If you encounter compiling issues for boost, please refer to boost's [README](./boost/README.md).
+
 ## How to use
 
 Please first download this repo into your project, using whatever methods you like (for example, using recommended `git submodule` or just a source code copy), and keep it in your favorite place, for example, a folder in project root called `vgg_contrib`.
