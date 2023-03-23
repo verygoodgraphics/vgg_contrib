@@ -10,7 +10,7 @@
 
 static bool g_initialized = false;
 
-EM_ASYNC_JS(void, setup_web_mfb, (), {
+EM_JS(void, setup_web_mfb, (), {
     // FIXME currently disabled. This will make requests pile up
     // and potentially execute multiple C calls in parallel (sort of).
     // which leads to stack/heap corruption.
