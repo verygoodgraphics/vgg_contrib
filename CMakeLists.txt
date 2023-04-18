@@ -4,6 +4,7 @@ project(vgg_contrib)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+cmake_policy(SET CMP0077 NEW)
 option(VGG_ADD_NANOBIND "add nanobind" ON)
 
 add_subdirectory(json)
@@ -19,7 +20,7 @@ add_subdirectory(boost)
 add_subdirectory(valijson)
 add_subdirectory(zip)
 
-if(${VGG_ADD_NANOBIND})
+if(VGG_ADD_NANOBIND)
   add_subdirectory(nanobind)
 endif()
 
@@ -60,7 +61,7 @@ ${VGG_CONTRIB_LIBWEBP_CONF_INCLUDE};\
 ${VGG_CONTRIB_BOOST_INCLUDE};\
 ${VGG_CONTRIB_VALIJSON_INCLUDE};\
 ${VGG_CONTRIB_ZIP_INCLUDE};\
-${VGG_CONTRIB_NANO_INCLUDE};\
+${VGG_CONTRIB_NANOBIND_INCLUDE};\
 "
   CACHE STRING "" FORCE)
 mark_as_advanced(VGG_CONTRIB_INCLUDE)
