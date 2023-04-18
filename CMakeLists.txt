@@ -4,6 +4,8 @@ project(vgg_contrib)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+option(VGG_ADD_NANOBIND "add nanobind" ON)
+
 add_subdirectory(json)
 add_subdirectory(picosha2)
 add_subdirectory(sdefl)
@@ -16,6 +18,10 @@ add_subdirectory(libwebp)
 add_subdirectory(boost)
 add_subdirectory(valijson)
 add_subdirectory(zip)
+
+if(${VGG_ADD_NANOBIND})
+  add_subdirectory(nanobind)
+endif()
 
 # Debug info
 message(STATUS "VGG_CONTRIB_JSON_INCLUDE: " ${VGG_CONTRIB_JSON_INCLUDE})
@@ -34,6 +40,7 @@ message(STATUS "VGG_CONTRIB_LIBWEBP_CONF_INCLUDE: " ${VGG_CONTRIB_LIBWEBP_CONF_I
 message(STATUS "VGG_CONTRIB_BOOST_INCLUDE: " ${VGG_CONTRIB_BOOST_INCLUDE})
 message(STATUS "VGG_CONTRIB_VALIJSON_INCLUDE: " ${VGG_CONTRIB_VALIJSON_INCLUDE})
 message(STATUS "VGG_CONTRIB_ZIP_INCLUDE: " ${VGG_CONTRIB_ZIP_INCLUDE})
+message(STATUS "VGG_CONTRIB_NANOBIND_INCLUDE: " ${VGG_CONTRIB_NANOBIND_INCLUDE})
 
 # Integration
 set(VGG_CONTRIB_INCLUDE "\
@@ -53,6 +60,7 @@ ${VGG_CONTRIB_LIBWEBP_CONF_INCLUDE};\
 ${VGG_CONTRIB_BOOST_INCLUDE};\
 ${VGG_CONTRIB_VALIJSON_INCLUDE};\
 ${VGG_CONTRIB_ZIP_INCLUDE};\
+${VGG_CONTRIB_NANO_INCLUDE};\
 "
   CACHE STRING "" FORCE)
 mark_as_advanced(VGG_CONTRIB_INCLUDE)
