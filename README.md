@@ -27,6 +27,7 @@ Some rules for each library:
 | [boost](https://www.boost.org/) | [Boost](https://www.boost.org/users/license.html) | [1.80.0](https://www.boost.org/users/history/version_1_80_0.html) | common | directory |
 | [valijson](https://github.com/tristanpenman/valijson) | BSD | [feature-vgg](https://github.com/verygoodgraphics/valijson/tree/feature-vgg) | json schema | single header |
 | [zip](https://github.com/kuba--/zip) | [UNLICENSE](https://github.com/kuba--/zip/blob/master/UNLICENSE) | [0.2.6](https://github.com/kuba--/zip/releases/tag/v0.2.6) | zip | directory |
+| [nanobind](https://github.com/wjakob/nanobind) | BSD-3-Clause | [1.1.1](https://github.com/wjakob/nanobind/releases/tag/v1.1.1) | binding | directory |
 
 If you encounter compiling issues for boost, please refer to boost's [README](./boost/README.md).
 
@@ -72,6 +73,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | boost         | `VGG_CONTRIB_BOOST_INCLUDE`                                  | static libs, see boost's [README](./boost/README.md) |
 | valijson      | `VGG_CONTRIB_VALIJSON_INCLUDE`                               | N/A                                                  |
 | zip           | `VGG_CONTRIB_ZIP_INCLUDE`                                    | static:`zip`                                         |
+| nanobind      | `VGG_CONTRIB_NANOBIND_INCLUDE`                               | N/A                                                  |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
