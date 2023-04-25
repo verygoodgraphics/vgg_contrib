@@ -73,7 +73,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | boost         | `VGG_CONTRIB_BOOST_INCLUDE`                                  | static libs, see boost's [README](./boost/README.md) |
 | valijson      | `VGG_CONTRIB_VALIJSON_INCLUDE`                               | N/A                                                  |
 | zip           | `VGG_CONTRIB_ZIP_INCLUDE`                                    | static:`zip`                                         |
-| nanobind      | `VGG_CONTRIB_NANOBIND_INCLUDE`                               | N/A                                                  |
+| nanobind      | N/A                                                          | N/A                                                  |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
