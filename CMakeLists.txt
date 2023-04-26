@@ -25,10 +25,6 @@ if(VGG_ADD_NANOBIND)
   add_subdirectory(nanobind)
 endif()
 
-if(VGG_ADD_NANOBIND)
-  add_subdirectory(nanobind)
-endif()
-
 # Debug info
 message(STATUS "VGG_CONTRIB_JSON_INCLUDE: " ${VGG_CONTRIB_JSON_INCLUDE})
 message(STATUS "VGG_CONTRIB_PICOSHA2_INCLUDE: " ${VGG_CONTRIB_PICOSHA2_INCLUDE})
