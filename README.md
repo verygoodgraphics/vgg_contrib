@@ -59,21 +59,21 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 
 ### Library usage summary
 
-| Name          | Include Path                                                 | Link Target                                          |
-| ------------- | ------------------------------------------------------------ | ---------------------------------------------------- |
-| json          | `VGG_CONTRIB_JSON_INCLUDE`                                   | N/A                                                  |
-| picosha2      | `VGG_CONTRIB_PICOSHA2_INCLUDE`                               | N/A                                                  |
-| sdefl/sinfl   | `VGG_CONTRIB_SDEFL_INCLUDE`                                  | N/A                                                  |
-| zlib          | `VGG_CONTRIB_ZLIB_INCLUDE`<br />`VGG_CONTRIB_ZLIB_CONF_INCLUDE` | shared: `zlib`, static: `zlibstatic`                 |
-| zstd          | `VGG_CONTRIB_ZSTD_INCLUDE`                                   | shared: `libzstd_shared`, static: `libzstd_static`   |
-| minifb        | `VGG_CONTRIB_MINIFB_INCLUDE`                                 | static: `minifb`                                     |
-| libpng        | `VGG_CONTRIB_LIBPNG_INCLUDE`<br />`VGG_CONTRIB_LIBPNG_CONF_INCLUDE` | shared: `png`, static: `png_static`                  |
-| libjpeg-turbo | `VGG_CONTRIB_LIBJPG_INCLUDE`<br />`VGG_CONTRIB_LIBJPG_CONF_INCLUDE` | shared: `jpeg`, static: `jpeg-static`                |
-| libwebp       | `VGG_CONTRIB_LIBWEBP_INCLUDE`<br />`VGG_CONTRIB_LIBWEBP_CONF_INCLUDE` | static: `webp`                                       |
-| boost         | `VGG_CONTRIB_BOOST_INCLUDE`                                  | static libs, see boost's [README](./boost/README.md) |
-| valijson      | `VGG_CONTRIB_VALIJSON_INCLUDE`                               | N/A                                                  |
-| zip           | `VGG_CONTRIB_ZIP_INCLUDE`                                    | static:`zip`                                         |
-| nanobind      | N/A                                                          | N/A                                                  |
+| Name          | Include Path                                                 | Link Target                                                  |
+| ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| json          | `VGG_CONTRIB_JSON_INCLUDE`                                   | N/A                                                          |
+| picosha2      | `VGG_CONTRIB_PICOSHA2_INCLUDE`                               | N/A                                                          |
+| sdefl/sinfl   | `VGG_CONTRIB_SDEFL_INCLUDE`                                  | N/A                                                          |
+| zlib          | `VGG_CONTRIB_ZLIB_INCLUDE`<br />`VGG_CONTRIB_ZLIB_CONF_INCLUDE` | shared: `zlib`, static: `zlibstatic`                         |
+| zstd          | `VGG_CONTRIB_ZSTD_INCLUDE`                                   | shared: `libzstd_shared`, static: `libzstd_static`           |
+| minifb        | `VGG_CONTRIB_MINIFB_INCLUDE`                                 | static: `minifb`                                             |
+| libpng        | `VGG_CONTRIB_LIBPNG_INCLUDE`<br />`VGG_CONTRIB_LIBPNG_CONF_INCLUDE` | shared: `png`, static: `png_static`                          |
+| libjpeg-turbo | `VGG_CONTRIB_LIBJPG_INCLUDE`<br />`VGG_CONTRIB_LIBJPG_CONF_INCLUDE` | shared: `jpeg`, static: `jpeg-static`                        |
+| libwebp       | `VGG_CONTRIB_LIBWEBP_INCLUDE`<br />`VGG_CONTRIB_LIBWEBP_CONF_INCLUDE` | static: `webp`                                               |
+| boost         | `VGG_CONTRIB_BOOST_INCLUDE`                                  | static libs, see boost's [README](./boost/README.md)         |
+| valijson      | `VGG_CONTRIB_VALIJSON_INCLUDE`                               | N/A                                                          |
+| zip           | `VGG_CONTRIB_ZIP_INCLUDE`                                    | static:`zip`                                                 |
+| nanobind      | N/A (implicitly added by [nanobind_add_module](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension)) | N/A (implicitly added by [nanobind_add_module](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension)) |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
