@@ -2,6 +2,17 @@ cmake_minimum_required(VERSION 3.0.0)
 
 project(flexbox VERSION 0.1.0)
 
+# Fetch GTest
+# Without this code, flexbox_text will not compile properly on linux
+include(FetchContent)
+include(GoogleTest)
+cmake_policy(SET CMP0135 NEW)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
+)
+FetchContent_MakeAvailable(googletest)
+
 add_subdirectory(yoga)
 
 set(CMAKE_CXX_STANDARD 17)

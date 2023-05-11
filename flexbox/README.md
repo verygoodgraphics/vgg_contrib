@@ -53,9 +53,3 @@
 
 * 测试用例：运行`flexbox_test`
 * 图形化展示：`flexbox/test/show_rect.py`
-
-
-
-## 备注
-
-* 目前`flexbox_test`在`windows`下可正常运行，`linux`下编译有问题
