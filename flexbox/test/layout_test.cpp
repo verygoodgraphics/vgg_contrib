@@ -39,7 +39,7 @@ void write_node_info(flexbox_node *root, ofstream &ofs)
 	char buf[1024] = {};
 	for (int i = 0; i < 4; ++i)
 	{
-		sprintf_s(buf, "%.2f", value[i]);
+		sprintf(buf, "%.2f", value[i]);
 		ofs.write(buf, strlen(buf));
 		ofs.write(" ", 1);
 	}

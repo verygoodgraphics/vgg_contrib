@@ -19,6 +19,7 @@
   add_subdirectory(vgg_contrib)
   add_executable(szn main.cpp)
   target_link_libraries(szn PRIVATE flexbox)
+  target_include_directories(szn PRIVATE ${VGG_CONTRIB_FLEXBOX_INCLUDE})
   ```
 
 * 运行测试用例（可选）：`flexbox_text`
@@ -52,3 +53,9 @@
 
 * 测试用例：运行`flexbox_test`
 * 图形化展示：`flexbox/test/show_rect.py`
+
+
+
+## 备注
+
+* 目前`flexbox_test`在`windows`下可正常运行，`linux`下编译有问题

@@ -25,7 +25,7 @@ SOFTWARE.
 #ifndef VGG_FLEXBOX_CHANGE
 #define VGG_FLEXBOX_CHANGE
 
-#include "yoga/yoga.h"
+#include "yoga/Yoga.h"
 #include "./define.h"
 #include "boost/bimap.hpp"
 
