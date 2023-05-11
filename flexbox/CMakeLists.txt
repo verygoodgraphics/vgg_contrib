@@ -23,3 +23,6 @@ if(open_flexbox_test)
     add_executable(flexbox_test ${test_cpp})
     target_link_libraries(flexbox_test PRIVATE gtest_main flexbox)   
 endif()
+
+set(VGG_CONTRIB_FLEXBOX_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/src CACHE PATH "" FORCE)
+mark_as_advanced(VGG_CONTRIB_FLEXBOX_INCLUDE)

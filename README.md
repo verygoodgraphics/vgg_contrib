@@ -77,7 +77,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | zip           | `VGG_CONTRIB_ZIP_INCLUDE`                                    | static:`zip`                                                 |
 | nanobind      | [N/A (implicitly added by `nanobind_add_module`)](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension) | [N/A (implicitly added by `nanobind_add_module`)](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension) |
 | glm           | `VGG_CONTRIB_GLM_INCLUDE`                                    | N/A                                                          |
-| flexbox       | N/A                                                          | static: `flexbox`<br />`flexbox_test`：There is no need to link this target, which is the test project. |
+| flexbox       | `VGG_CONTRIB_FLEXBOX_INCLUDE`                                | static: `flexbox`<br />`flexbox_test`：There is no need to link this target, which is the test project. |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
