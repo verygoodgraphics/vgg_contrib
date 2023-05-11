@@ -29,6 +29,7 @@ Some rules for each library:
 | [zip](https://github.com/kuba--/zip) | [UNLICENSE](https://github.com/kuba--/zip/blob/master/UNLICENSE) | [0.2.6](https://github.com/kuba--/zip/releases/tag/v0.2.6) | zip | directory |
 | [nanobind](https://github.com/wjakob/nanobind) | BSD-3-Clause | [1.1.1](https://github.com/wjakob/nanobind/releases/tag/v1.1.1) | binding | directory |
 | [glm](https://github.com/g-truc/glm) | [The Happy Bunny License or MIT](https://github.com/g-truc/glm/blob/master/manual.md#section0) | [0.9.9.8](https://github.com/g-truc/glm/releases/tag/0.9.9.8) | math | directory |
+| flexbox | MIT | based on [yoga](https://github.com/verygoodgraphics/yoga) | layout | directory |
 
 If you encounter compiling issues for boost, please refer to boost's [README](./boost/README.md).
 
@@ -76,6 +77,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | zip           | `VGG_CONTRIB_ZIP_INCLUDE`                                    | static:`zip`                                                 |
 | nanobind      | [N/A (implicitly added by `nanobind_add_module`)](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension) | [N/A (implicitly added by `nanobind_add_module`)](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension) |
 | glm           | `VGG_CONTRIB_GLM_INCLUDE`                                    | N/A                                                          |
+| flexbox       | N/A                                                          | static: `flexbox`<br />`flexbox_test`：There is no need to link this target, which is the test project. |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
