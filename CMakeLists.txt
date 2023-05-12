@@ -20,6 +20,7 @@ add_subdirectory(boost)
 add_subdirectory(valijson)
 add_subdirectory(zip)
 add_subdirectory(glm)
+add_subdirectory(yoga)
 
 if(VGG_ADD_NANOBIND)
   add_subdirectory(nanobind)
