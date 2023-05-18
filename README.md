@@ -30,6 +30,7 @@ Some rules for each library:
 | [nanobind](https://github.com/wjakob/nanobind) | BSD-3-Clause | [1.1.1](https://github.com/wjakob/nanobind/releases/tag/v1.1.1) | binding | directory |
 | [glm](https://github.com/g-truc/glm) | [The Happy Bunny License or MIT](https://github.com/g-truc/glm/blob/master/manual.md#section0) | [0.9.9.8](https://github.com/g-truc/glm/releases/tag/0.9.9.8) | math | directory |
 | [yoga](https://github.com/facebook/yoga) | MIT | [vgg-yoga-main](https://github.com/verygoodgraphics/yoga) | layout | directory |
+| [rxcpp](https://github.com/ReactiveX/RxCpp) | Apache-2.0 | [4.1.1](https://github.com/ReactiveX/RxCpp/tree/v4.1.1) | Reactive Extensions | header only |
 
 If you encounter compiling issues for boost, please refer to boost's [README](./boost/README.md).
 
@@ -78,6 +79,7 @@ target_link_libraries(your_target minifb zlib libzstd_shared) # see summary belo
 | nanobind      | [N/A (implicitly added by `nanobind_add_module`)](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension) | [N/A (implicitly added by `nanobind_add_module`)](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension) |
 | glm           | `VGG_CONTRIB_GLM_INCLUDE`                                    | N/A                                                          |
 | yoga          | N/A                                                          | static: yogacore<br />only for test, no need to link: yogatests |
+| rxcpp         | `VGG_CONTRIB_RXCPP_INCLUDE`                                  | N/A                                                          |
 
 For the specific header file usage, please refer to the `test.cc` for example.
 
