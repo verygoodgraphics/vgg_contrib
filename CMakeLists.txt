@@ -21,6 +21,7 @@ add_subdirectory(valijson)
 add_subdirectory(zip)
 add_subdirectory(glm)
 add_subdirectory(yoga)
+add_subdirectory(rxcpp)
 
 if(VGG_ADD_NANOBIND)
   add_subdirectory(nanobind)
@@ -44,6 +45,7 @@ message(STATUS "VGG_CONTRIB_BOOST_INCLUDE: " ${VGG_CONTRIB_BOOST_INCLUDE})
 message(STATUS "VGG_CONTRIB_VALIJSON_INCLUDE: " ${VGG_CONTRIB_VALIJSON_INCLUDE})
 message(STATUS "VGG_CONTRIB_ZIP_INCLUDE: " ${VGG_CONTRIB_ZIP_INCLUDE})
 message(STATUS "VGG_CONTRIB_GLM_INCLUDE: " ${VGG_CONTRIB_GLM_INCLUDE})
+message(STATUS "VGG_CONTRIB_RXCPP_INCLUDE: " ${VGG_CONTRIB_RXCPP_INCLUDE})
 
 # Integration
 set(VGG_CONTRIB_INCLUDE "\
@@ -64,6 +66,7 @@ ${VGG_CONTRIB_BOOST_INCLUDE};\
 ${VGG_CONTRIB_VALIJSON_INCLUDE};\
 ${VGG_CONTRIB_ZIP_INCLUDE};\
 ${VGG_CONTRIB_GLM_INCLUDE};\
+${VGG_CONTRIB_RXCPP_INCLUDE};\
 "
   CACHE STRING "" FORCE)
 mark_as_advanced(VGG_CONTRIB_INCLUDE)
@@ -90,5 +93,6 @@ target_include_directories(contrib_test PRIVATE
   ${VGG_CONTRIB_LIBWEBP_CONF_INCLUDE}
   ${VGG_CONTRIB_BOOST_INCLUDE}
   ${VGG_CONTRIB_VALIJSON_INCLUDE}
+  ${VGG_CONTRIB_RXCPP_INCLUDE}
 )
 target_link_libraries(contrib_test minifb zlib libzstd_shared png jpeg webp boost_locale zip)
