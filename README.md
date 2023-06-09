@@ -79,7 +79,7 @@ target_link_libraries(your_target zlib)
 | libwebp       | `VGG_CONTRIB_LIBWEBP_INCLUDE`<br />`VGG_CONTRIB_LIBWEBP_CONF_INCLUDE` | static: `webp`                                               |
 | nanobind      | [N/A (implicitly added by `nanobind_add_module`)](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension) | [N/A (implicitly added by `nanobind_add_module`)](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension) |
 | glm           | `VGG_CONTRIB_GLM_INCLUDE`                                    | N/A                                                          |
-| yoga          | `VGG_CONTRIB_VOGA_INCLUDE`                                   | static: `yogacore`                                           |
+| yoga          | `VGG_CONTRIB_YOGA_INCLUDE`                                   | static: `yogacore`                                           |
 
 ## How to contribute
 
