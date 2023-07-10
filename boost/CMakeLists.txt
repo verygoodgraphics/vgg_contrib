@@ -8,6 +8,9 @@ if (NOT MSVC)
 endif()
 include_directories(${boost_prefix})
 
+# disable testing build
+SET(BUILD_TESTING OFF)
+
 # for boost-locale
 add_subdirectory(${boost_prefix}/libs/assert)
 add_subdirectory(${boost_prefix}/libs/config)
