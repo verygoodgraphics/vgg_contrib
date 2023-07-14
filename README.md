@@ -30,7 +30,7 @@ All libraries should adhere to the following three rules:
 | [nanobind](https://github.com/wjakob/nanobind) | BSD-3-Clause | [1.1.1](https://github.com/wjakob/nanobind/releases/tag/v1.1.1) | No | binding | Directory |
 | [glm](https://github.com/g-truc/glm) | [Mixed](https://github.com/g-truc/glm/blob/master/manual.md#section0) | [0.9.9.8](https://github.com/g-truc/glm/releases/tag/0.9.9.8) | No | algorithm | Directory |
 | [yoga](https://github.com/facebook/yoga) | MIT | [vgg-yoga-main](https://github.com/verygoodgraphics/yoga) | No | algorithm | Directory |
-| [rapidfuzz-cpp](https://github.com/maxbachmann/rapidfuzz-cpp) | MIT | [rapidfuzz-cpp](https://github.com/maxbachmann/rapidfuzz-cpp) | No | algorithm | Directory |
+| [rapidfuzz-cpp](https://github.com/maxbachmann/rapidfuzz-cpp) | MIT | [2.0.0](https://github.com/maxbachmann/rapidfuzz-cpp/releases/tag/v2.0.0) | No | algorithm | Directory |
 
 If you encounter compiling issues for boost, please refer to boost's [README](./boost/README.md).
 
