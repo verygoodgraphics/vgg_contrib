@@ -56,7 +56,7 @@ Pick a library and write cmake commands to use it. Please check out the full lis
 #
 # example 1: zlib
 #
-if(DEFINED VGG_CONTRIB_ZLIB_INCLUDE AND NOT VGG_CONTRIB_ZLIB_INCLUDE STREQUAL "")
+if(NOT VGG_CONTRIB_ZLIB_INCLUDE OR VGG_CONTRIB_ZLIB_INCLUDE STREQUAL "")
   add_subdirectory(path_to_your/vgg_contrib/zlib)
 endif()
 target_include_directories(your_target PRIVATE ${VGG_CONTRIB_ZLIB_INCLUDE} ${VGG_CONTRIB_ZLIB_CONF_INCLUDE})
@@ -65,7 +65,7 @@ target_link_libraries(your_target zlib)
 #
 # example 2: json
 #
-if (DEFINED VGG_CONTRIB_JSON_INCLUDE AND NOT VGG_CONTRIB_JSON_INCLUDE STREQUAL "")
+if (NOT VGG_CONTRIB_JSON_INCLUDE OR VGG_CONTRIB_JSON_INCLUDE STREQUAL "")
   add_subdirectory(path_to_your/vgg_contrib/zlib)
 endif()
 target_include_directories(your_target PRIVATE ${VGG_CONTRIB_JSON_INCLUDE})
@@ -73,7 +73,7 @@ target_include_directories(your_target PRIVATE ${VGG_CONTRIB_JSON_INCLUDE})
 #
 # example 3: nanobind
 #
-if (DEFINED VGG_CONTRIB_NANOBIND_INCLUDE AND NOT VGG_CONTRIB_NANOBIND_INCLUDE STREQUAL "")
+if (NOT VGG_CONTRIB_NANOBIND_INCLUDE OR VGG_CONTRIB_NANOBIND_INCLUDE STREQUAL "")
   add_subdirectory(path_to_your/vgg_contrib/nanobind)
 endif()
 nanobind_add_module(your_target ${YOUR_TARGET_SRCS}) # use nanobind's macro to add target
