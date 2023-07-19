@@ -16,7 +16,7 @@ All libraries should adhere to the following three rules:
 | ----------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ----------------------------------------------- | ----------- | -------------- |
 | [argparse](https://github.com/p-ranav/argparse) | MIT | [557948](https://github.com/p-ranav/argparse/tree/557948f1236db9e27089959de837cc23de6c6bbd) | No | common | Single file |
 | [boost](https://www.boost.org/) | [Boost](https://www.boost.org/users/license.html) | [1.80.0](https://www.boost.org/users/history/version_1_80_0.html) | No | common | Directory (partial) |
-| [rxcpp](https://github.com/ReactiveX/RxCpp) | Apache-2.0 | [4.1.1](https://github.com/ReactiveX/RxCpp/tree/v4.1.1) | No | common | Directory |
+| [rxcpp](https://github.com/ReactiveX/RxCpp) | Apache-2.0 | [4.1.1](https://github.com/ReactiveX/RxCpp/tree/v4.1.1) | No | common | Directory (partial) |
 | [json](https://github.com/nlohmann/json)        | MIT                                                          | [3.11.2](https://github.com/nlohmann/json/releases/tag/v3.11.2) | No | json        | Single file |
 | [valijson](https://github.com/tristanpenman/valijson) | BSD | [feature-vgg](https://github.com/verygoodgraphics/valijson/tree/feature-vgg) | No | json | Single file |
 | [picosha2](https://github.com/okdshin/PicoSHA2) | MIT                                                          | [7bfa26](https://github.com/okdshin/PicoSHA2/tree/7bfa26156981f7181f240906495a2c33c7fa48be) | No | hashing     | Single file |
