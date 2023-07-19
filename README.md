@@ -46,21 +46,34 @@ git clone https://github.com/verygoodgraphics/vgg_contrib.git
 
 ### 2. Put it in the right place
 
-- Case 1: If your project is indepedent of any other project using `vgg_contrib`, you could put `vgg_contrib` anywhere you like as long as you can access it.
-- Case 2: If your project is included in other project using `vgg_contrib`, or your project includes other projects using `vgg_contrib`, you should put `vgg_contrib` in your project root directory to eliminate possible issues. To access it, please prefix the position with `CMAKE_SOURCE_DIR` variable.
+Put `vgg_contrib` in your project where you can access it.
 
 ### 3. Choose any library you'd like to use
 
+Pick a library and write cmake commands to use it. Please check out the full list in the usage summary section below.
+
 ```cmake
-# case 1: independent usage
-add_subdirectory(path_to_your_vgg_contrib/zlib)
-
-# case 2: non-independent usage
-add_subdirectory(${CMAKE_SOURCE_DIR}/vgg_contrib/zlib)
-
- # See library usage summary below for include path and link target
+#
+# example 1: zlib
+#
+if(DEFINED VGG_CONTRIB_ZLIB_INCLUDE AND NOT VGG_CONTRIB_ZLIB_INCLUDE STREQUAL "")
+  add_subdirectory(path_to_your/vgg_contrib/zlib)
+endif()
 target_include_directories(your_target PRIVATE ${VGG_CONTRIB_ZLIB_INCLUDE} ${VGG_CONTRIB_ZLIB_CONF_INCLUDE})
 target_link_libraries(your_target zlib)
+
+#
+# example 2: json
+#
+if (DEFINED VGG_CONTRIB_JSON_INCLUDE AND NOT VGG_CONTRIB_JSON_INCLUDE STREQUAL "")
+  add_subdirectory(path_to_your/vgg_contrib/zlib)
+endif()
+target_include_directories(your_target PRIVATE ${VGG_CONTRIB_JSON_INCLUDE})
+```
+
+If you put `vgg_contrib` outside of your current CMakeLists.txt directory, you should give explicitly the binary directory like this
+```
+add_subdirectory(path_to_your/vgg_contrib/zlib ${CMAKE_BINARY_DIR}/vgg_contrib/zlib)
 ```
 
 ### A. Library usage summary
@@ -80,10 +93,10 @@ target_link_libraries(your_target zlib)
 | libpng        | `VGG_CONTRIB_LIBPNG_INCLUDE`<br />`VGG_CONTRIB_LIBPNG_CONF_INCLUDE` | shared: `png`, static: `png_static`                          |
 | libjpeg-turbo | `VGG_CONTRIB_LIBJPG_INCLUDE`<br />`VGG_CONTRIB_LIBJPG_CONF_INCLUDE` | shared: `jpeg`, static: `jpeg-static`                        |
 | libwebp       | `VGG_CONTRIB_LIBWEBP_INCLUDE`<br />`VGG_CONTRIB_LIBWEBP_CONF_INCLUDE` | static: `webp`                                               |
-| nanobind      | [N/A (implicitly added by `nanobind_add_module`)](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension) | [N/A (implicitly added by `nanobind_add_module`)](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension) |
+| nanobind      | `VGG_CONTRIB_NANOBIND_INCLUDE`                               | [N/A (implicitly added by `nanobind_add_module`)](https://nanobind.readthedocs.io/en/latest/building.html#building-an-extension) |
 | glm           | `VGG_CONTRIB_GLM_INCLUDE`                                    | N/A                                                          |
 | yoga          | `VGG_CONTRIB_YOGA_INCLUDE`                                   | static: `yogacore`                                           |
-| rapidfuzz-cpp| `VGG_CONTRIB_RAPIDFUZZCPP_INCLUDE`                        | N/A                                                          |
+| rapidfuzz-cpp | `VGG_CONTRIB_RAPIDFUZZCPP_INCLUDE`                           | N/A                                                          |
 
 ## How to contribute
 
