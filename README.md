@@ -69,10 +69,19 @@ if (DEFINED VGG_CONTRIB_JSON_INCLUDE AND NOT VGG_CONTRIB_JSON_INCLUDE STREQUAL "
   add_subdirectory(path_to_your/vgg_contrib/zlib)
 endif()
 target_include_directories(your_target PRIVATE ${VGG_CONTRIB_JSON_INCLUDE})
+
+#
+# example 3: nanobind
+#
+if (DEFINED VGG_CONTRIB_NANOBIND_INCLUDE AND NOT VGG_CONTRIB_NANOBIND_INCLUDE STREQUAL "")
+  add_subdirectory(path_to_your/vgg_contrib/nanobind)
+endif()
+nanobind_add_module(your_target ${YOUR_TARGET_SRCS}) # use nanobind's macro to add target
+target_include_directories(your_target PRIVATE ${VGG_CONTRIB_NANOBIND_INCLUDE}) # this is totally optional
 ```
 
 If you put `vgg_contrib` outside of your current CMakeLists.txt directory, you should give explicitly the binary directory like this
-```
+```cmake
 add_subdirectory(path_to_your/vgg_contrib/zlib ${CMAKE_BINARY_DIR}/vgg_contrib/zlib)
 ```
 
