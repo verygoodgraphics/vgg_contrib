@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.13)
 
 project(vgg_contrib_libpng)
 
@@ -11,8 +11,8 @@ endif()
 set(ZLIB_INCLUDE_DIR ${VGG_CONTRIB_ZLIB_INCLUDE} ${VGG_CONTRIB_ZLIB_CONF_INCLUDE}) # for upstream/scripts/genout.cmake.in
 set(ZLIB_INCLUDE_DIRS ${VGG_CONTRIB_ZLIB_INCLUDE} ${VGG_CONTRIB_ZLIB_CONF_INCLUDE})
 
-option(LIB_PNG_USE_STATIC_ZLIB OFF)
-if(LIB_PNG_USE_STATIC_ZLIB)
+option(LIBPNG_USE_STATIC_ZLIB "libpng use static zlib" OFF)
+if(LIBPNG_USE_STATIC_ZLIB)
   set(ZLIB_LIBRARIES $<BUILD_INTERFACE:zlibstatic>)  
 else()
   set(ZLIB_LIBRARIES $<BUILD_INTERFACE:zlib>)  
