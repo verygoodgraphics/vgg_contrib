@@ -1,0 +1,15 @@
+diff --git a/yoga/upstream/CMakeLists.txt b/yoga/upstream/CMakeLists.txt
+index 8e0d48b2..49c4ce62 100644
+--- a/yoga/upstream/CMakeLists.txt
++++ b/yoga/upstream/CMakeLists.txt
+@@ -10,7 +10,9 @@ set(CMAKE_VERBOSE_MAKEFILE on)
+ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/project-defaults.cmake)
+ 
+ add_subdirectory(yoga)
+-#add_subdirectory(tests)
++
++# add by vgg, to avoid forcing advanced versions of cmake.
++# add_subdirectory(tests)
+ 
+ # cmake install config
+ include(GNUInstallDirs)
