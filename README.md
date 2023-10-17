@@ -27,7 +27,7 @@ All libraries should adhere to the following three rules:
 | [libpng](https://sourceforge.net/projects/libpng/) | [PNG Reference Library License](http://www.libpng.org/pub/png/src/libpng-LICENSE.txt) | [1.6.38](https://sourceforge.net/projects/libpng/files/libpng16/1.6.38/) | No | image       | Directory |
 | [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo) | [Mixed](https://github.com/libjpeg-turbo/libjpeg-turbo/blob/main/LICENSE.md) | [2.1.4](https://github.com/libjpeg-turbo/libjpeg-turbo/releases/tag/2.1.4) | Yes | image | Directory |
 | [libwebp](https://github.com/webmproject/libwebp) | BSD | [1.2.4](https://github.com/webmproject/libwebp/releases/tag/v1.2.4) | No | image | Directory |
-| [nanobind](https://github.com/wjakob/nanobind) | BSD-3-Clause | [1.1.1](https://github.com/wjakob/nanobind/releases/tag/v1.1.1) | No | binding | Directory |
+| [nanobind](https://github.com/wjakob/nanobind) | BSD-3-Clause | [1.6.2](https://github.com/wjakob/nanobind/releases/tag/v1.6.2) | No | binding | Directory |
 | [glm](https://github.com/g-truc/glm) | [Mixed](https://github.com/g-truc/glm/blob/master/manual.md#section0) | [0.9.9.8](https://github.com/g-truc/glm/releases/tag/0.9.9.8) | No | algorithm | Directory |
 | [yoga](https://github.com/facebook/yoga) | MIT | [vgg-yoga-main](https://github.com/verygoodgraphics/yoga) | Yes | algorithm | Directory |
 | [rapidfuzz-cpp](https://github.com/maxbachmann/rapidfuzz-cpp) | MIT | [2.0.0](https://github.com/maxbachmann/rapidfuzz-cpp/releases/tag/v2.0.0) | No | algorithm | Directory |
