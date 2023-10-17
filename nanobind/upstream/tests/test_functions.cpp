@@ -80,6 +80,9 @@ NB_MODULE(test_functions_ext, m) {
     });
 
     /// Test call_guard feature
+    m.def("test_call_guard_wrapper_rvalue_ref", [](int&& i) { return i; },
+          nb::call_guard<my_call_guard>());
+
     m.def("test_call_guard", []() {
         return call_guard_value;
     }, nb::call_guard<my_call_guard>());
@@ -133,6 +136,10 @@ NB_MODULE(test_functions_ext, m) {
         for (auto [k, v] : d)
             result[k] = v;
         return result;
+    });
+
+    m.def("test_10_contains", [](nb::dict d) {
+        return d.contains(nb::str("foo"));
     });
 
     // Test implicit conversion of various types
@@ -212,4 +219,21 @@ NB_MODULE(test_functions_ext, m) {
 
         return nb::cpp_function(callback);
     });
+
+    m.def("test_cast_char", [](nb::handle h) {
+        return nb::cast<char>(h);
+    });
+
+    m.def("test_cast_str", [](nb::handle h) {
+        return nb::cast<const char *>(h);
+    });
+
+    m.def("test_set", []() {
+        nb::set s;
+        s.add("123");
+        s.add(123);
+        return s;
+    });
+
+    m.def("test_set_contains", [](nb::set s, nb::handle h) { return s.contains(h); });
 }

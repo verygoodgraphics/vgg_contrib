@@ -1,3 +1,5 @@
+#pragma once
+
 #if defined(__GNUC__)
 // Don't warn about missing fields in PyTypeObject declarations
 #  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
@@ -5,11 +7,12 @@
 // Silence warnings that MSVC reports in robin_*.h
 #  pragma warning(disable: 4127) // conditional expression is constant
 #  pragma warning(disable: 4324) // structure was padded due to alignment specifier
+#  pragma warning(disable: 4293) // shift count negative or too big  <-- erroneously raised in a constexpr-disabled block
+#  pragma warning(disable: 4310) // cast truncates constant value <-- erroneously raised in a constexpr-disabled block
 #endif
 
 #include <nanobind/nanobind.h>
 #include <tsl/robin_map.h>
-#include <tsl/robin_set.h>
 #include <typeindex>
 #include <cstring>
 
@@ -21,6 +24,13 @@
 
 NAMESPACE_BEGIN(NB_NAMESPACE)
 NAMESPACE_BEGIN(detail)
+
+#if defined(NB_COMPACT_ASSERTIONS)
+[[noreturn]] extern void fail_unspecified() noexcept;
+#  define check(cond, ...) if (NB_UNLIKELY(!(cond))) nanobind::detail::fail_unspecified()
+#else
+#  define check(cond, ...) if (NB_UNLIKELY(!(cond))) nanobind::detail::fail(__VA_ARGS__)
+#endif
 
 /// Nanobind function metadata (overloads, etc.)
 struct func_data : func_data_prelim<0> {
@@ -40,30 +50,30 @@ struct nb_inst { // usually: 24 bytes
      * relative offset to a pointer that must be dereferenced to get to the
      * instance data. 'direct' is 'true' in the former case.
      */
-    bool direct : 1;
+    uint32_t direct : 1;
 
     /// Is the instance data co-located with the Python object?
-    bool internal : 1;
+    uint32_t internal : 1;
 
     /// Is the instance properly initialized?
-    bool ready : 1;
+    uint32_t ready : 1;
 
     /// Should the destructor be called when this instance is GCed?
-    bool destruct : 1;
+    uint32_t destruct : 1;
 
     /// Should nanobind call 'operator delete' when this instance is GCed?
-    bool cpp_delete : 1;
+    uint32_t cpp_delete : 1;
 
     /// Does this instance hold reference to others? (via internals.keep_alive)
-    bool clear_keep_alive : 1;
+    uint32_t clear_keep_alive : 1;
+
+    /// Does this instance use intrusive reference counting?
+    uint32_t intrusive : 1;
+
+    uint32_t unused: 25;
 };
 
-static_assert(sizeof(nb_inst) == sizeof(PyObject) + sizeof(void *));
-
-struct nb_enum_supplement {
-    PyObject *name;
-    const char *doc;
-};
+static_assert(sizeof(nb_inst) == sizeof(PyObject) + sizeof(uint32_t) * 2);
 
 /// Python object representing a bound C++ function
 struct nb_func {
@@ -91,43 +101,21 @@ struct nb_bound_method {
 struct ptr_hash {
     size_t operator()(const void *p) const {
         uintptr_t v = (uintptr_t) p;
-        // fmix64 from MurmurHash by Austin Appleby (public domain)
-        v ^= v >> 33;
-        v *= (uintptr_t) 0xff51afd7ed558ccdull;
-        v ^= v >> 33;
-        v *= (uintptr_t) 0xc4ceb9fe1a85ec53ull;
-        v ^= v >> 33;
+        // fmix32/64 from MurmurHash by Austin Appleby (public domain)
+        if constexpr (sizeof(void *) == 4) {
+            v ^= v >> 16;
+            v *= 0x85ebca6b;
+            v ^= v >> 13;
+            v *= 0xc2b2ae35;
+            v ^= v >> 16;
+        } else {
+            v ^= v >> 33;
+            v *= (uintptr_t) 0xff51afd7ed558ccdull;
+            v ^= v >> 33;
+            v *= (uintptr_t) 0xc4ceb9fe1a85ec53ull;
+            v ^= v >> 33;
+        }
         return (size_t) v;
-    }
-};
-
-struct ptr_type_hash {
-    NB_INLINE size_t
-    operator()(const std::pair<const void *, std::type_index> &value) const {
-        return ptr_hash()(value.first) ^ value.second.hash_code();
-    }
-};
-
-struct keep_alive_entry {
-    void *data; // unique data pointer
-    void (*deleter)(void *) noexcept; // custom deleter, excluded from hashing/equality
-
-    keep_alive_entry(void *data, void (*deleter)(void *) noexcept = nullptr)
-        : data(data), deleter(deleter) { }
-};
-
-/// Equality operator for keep_alive_entry (only targets data field)
-struct keep_alive_eq {
-    NB_INLINE bool operator()(const keep_alive_entry &a,
-                              const keep_alive_entry &b) const {
-        return a.data == b.data;
-    }
-};
-
-/// Hash operator for keep_alive_entry (only targets data field)
-struct keep_alive_hash {
-    NB_INLINE size_t operator()(const keep_alive_entry &entry) const {
-        return ptr_hash()(entry.data);
     }
 };
 
@@ -153,81 +141,125 @@ public:
     void deallocate(T *p, size_type /*n*/) noexcept { PyMem_Free(p); }
 };
 
-template <class T1, class T2>
-bool operator==(const py_allocator<T1> &, const py_allocator<T2> &) noexcept {
-    return true;
-}
-
-template <typename key, typename hash = std::hash<key>,
-          typename eq = std::equal_to<key>>
-using py_set = tsl::robin_set<key, hash, eq, py_allocator<key>>;
-
 template <typename key, typename value, typename hash = std::hash<key>,
           typename eq = std::equal_to<key>>
-using py_map =
-    tsl::robin_map<key, value, hash, eq, py_allocator<std::pair<key, value>>>;
+using py_map = tsl::robin_map<key, value, hash, eq>;
 
-using keep_alive_set =
-    py_set<keep_alive_entry, keep_alive_hash, keep_alive_eq>;
+// Linked list of instances with the same pointer address. Usually just 1.
+struct nb_inst_seq {
+    PyObject *inst;
+    nb_inst_seq *next;
+};
 
-using nb_instance_map = py_map<std::pair<void *, std::type_index>, nb_inst *, ptr_type_hash>;
+// Weak reference list. Usually, there is just one entry
+struct nb_weakref_seq {
+    void (*callback)(void *) noexcept;
+    void *payload;
+    nb_weakref_seq *next;
+};
+
 using nb_type_map = py_map<std::type_index, type_data *>;
+
+/// A simple pointer-to-pointer map that is reused a few times below (even if
+/// not 100% ideal) to avoid template code generation bloat.
+using nb_ptr_map  = py_map<void *, void*, ptr_hash>;
+
+/// Convenience functions to deal with the pointer encoding in 'internals.inst_c2p'
+
+/// Does this entry store a linked list of instances?
+NB_INLINE bool         nb_is_seq(void *p)   { return ((uintptr_t) p) & 1; }
+
+/// Tag a nb_inst_seq* pointer as such
+NB_INLINE void*        nb_mark_seq(void *p) { return (void *) (((uintptr_t) p) | 1); }
+
+/// Retrieve the nb_inst_seq* pointer from an 'inst_c2p' value
+NB_INLINE nb_inst_seq* nb_get_seq(void *p)  { return (nb_inst_seq *) (((uintptr_t) p) ^ 1); }
+
+struct nb_translator_seq {
+    exception_translator translator;
+    void *payload;
+    nb_translator_seq *next = nullptr;
+};
 
 struct nb_internals {
     /// Internal nanobind module
     PyObject *nb_module;
 
-    /// Registered metaclasses for nanobind classes and enumerations
-    PyTypeObject *nb_type, *nb_enum;
+    /// Meta-metaclass of nanobind instances
+    PyTypeObject *nb_meta;
+
+    /// Dictionary with nanobind metaclass(es) for different payload sizes
+    PyObject *nb_type_dict;
 
     /// Types of nanobind functions and methods
     PyTypeObject *nb_func, *nb_method, *nb_bound_method;
 
-    /// Property variant for static attributes
-    PyTypeObject *nb_static_property;
-    bool nb_static_property_enabled;
+    /// Property variant for static attributes (created on demand)
+    PyTypeObject *nb_static_property = nullptr;
+    bool nb_static_property_enabled = true;
+    descrsetfunc nb_static_property_descr_set = nullptr;
 
-    /// N-dimensional array wrapper
-    PyTypeObject *nb_ndarray;
+    /// N-dimensional array wrapper (created on demand)
+    PyTypeObject *nb_ndarray = nullptr;
 
-    /// Instance pointer -> Python object mapping
-    nb_instance_map inst_c2p;
+    /**
+     * C++ -> Python instance map
+     *
+     * This associative data structure maps a C++ instance pointer onto its
+     * associated PyObject* (if bit 0 of the map value is zero) or a linked
+     * list of type `nb_inst_seq*` (if bit 0 is set---it must be cleared before
+     * interpreting the pointer in this case).
+     *
+     * The latter case occurs when several distinct Python objects reference
+     * the same memory address (e.g. a struct and its first member).
+     */
+    nb_ptr_map inst_c2p;
 
-    /// C++ type -> Python type mapping
+    /// C++ -> Python type map
     nb_type_map type_c2p;
 
-    /// Dictionary of sets storing keep_alive references
-    py_map<void *, keep_alive_set, ptr_hash> keep_alive;
+    /// Dictionary storing keep_alive references
+    nb_ptr_map keep_alive;
 
-    /// nb_func/meth instance list for leak reporting
-    py_set<void *, ptr_hash> funcs;
+    /// nb_func/meth instance map for leak reporting (used as set, the value is unused)
+    nb_ptr_map funcs;
 
     /// Registered C++ -> Python exception translators
-    std::vector<std::pair<exception_translator, void *>> exception_translators;
+    nb_translator_seq translators;
 
     /// Should nanobind print leak warnings on exit?
     bool print_leak_warnings = true;
 
     /// Should nanobind print warnings after implicit cast failures?
     bool print_implicit_cast_warnings = true;
+
+#if defined(Py_LIMITED_API)
+    // Cache important functions from PyType_Type and PyProperty_Type
+    freefunc PyType_Type_tp_free;
+    initproc PyType_Type_tp_init;
+    destructor PyType_Type_tp_dealloc;
+    setattrofunc PyType_Type_tp_setattro;
+    descrgetfunc PyProperty_Type_tp_descr_get;
+    descrsetfunc PyProperty_Type_tp_descr_set;
+#endif
 };
 
-struct current_method {
-    const char *name;
-    PyObject *self;
-};
+/// Convenience macro to potentially access cached functions
+#if defined(Py_LIMITED_API)
+#  define NB_SLOT(type, name) internals->type##_##name
+#else
+#  define NB_SLOT(type, name) type.name
+#endif
 
-extern NB_THREAD_LOCAL current_method current_method_data;
+extern nb_internals *internals;
+extern PyTypeObject *nb_meta_cache;
 
-extern nb_internals &internals_get() noexcept;
 extern char *type_name(const std::type_info *t);
 
 // Forward declarations
-extern int nb_type_init(PyObject *, PyObject *, PyObject *);
-extern void nb_type_dealloc(PyObject *o);
-extern PyObject *inst_new_impl(PyTypeObject *tp, void *value);
-extern void nb_enum_prepare(PyType_Slot **s, bool is_arithmetic);
-extern int nb_static_property_set(PyObject *, PyObject *, PyObject *);
+extern PyObject *inst_new_ext(PyTypeObject *tp, void *value);
+extern PyObject *inst_new_int(PyTypeObject *tp);
+extern PyTypeObject *nb_static_property_tp() noexcept;
 
 /// Fetch the nanobind function record from a 'nb_func' instance
 NB_INLINE func_data *nb_func_data(void *o) {
@@ -247,8 +279,7 @@ NB_INLINE type_data *nb_type_data(PyTypeObject *o) noexcept{
     #endif
 }
 
-extern PyObject *nb_type_name(PyTypeObject *o) noexcept;
-inline PyObject *nb_inst_name(PyObject *o) noexcept { return nb_type_name(Py_TYPE(o)); }
+extern PyObject *nb_type_name(PyObject *o) noexcept;
 
 inline void *inst_ptr(nb_inst *self) {
     void *ptr = (void *) ((intptr_t) self + self->offset);
@@ -276,4 +307,3 @@ private:
 
 NAMESPACE_END(detail)
 NAMESPACE_END(NB_NAMESPACE)
-

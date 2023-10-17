@@ -137,7 +137,7 @@ for ``T`` that says: "ignore ``T`` and don't use a type caster to handle it".
 
 .. warning::
 
-   If your extension consistes of multiple source code files that involve
+   If your extension consists of multiple source code files that involve
    overlapping use of type casters and bindings, you are *treading on thin
    ice*. It is easy to violate the *One Definition Rule* (ODR) [`details
    <https://en.wikipedia.org/wiki/One_Definition_Rule>`_] in such a case, which
@@ -235,6 +235,96 @@ will:
 3. allow for faster incremental builds. For instance, when a single class
    definition is changed, only a subset of the binding code will generally need
    to be recompiled.
+
+Nanobind cannot pass instances of my type in a multi-library/extension project
+------------------------------------------------------------------------------
+
+Suppose that nanobind unexpectedly raises a ``TypeError`` when passing or
+returning an instance of a bound type. There is usually a simple explanation:
+the type (let's call it "``Foo``") is defined in a library compiled separately
+from the main nanobind extension (let's call it ``libfoo``). The problem can
+also arise when there are multiple extension libraries that all make use of
+``Foo``.
+
+The problem is that the runtime type information ("RTTI") describing ``Foo`` is
+is not synchronized among these different libraries, at which point it appears
+to nanobind that there are multiple identically named but distinct types called
+``Foo``. The dynamic linker is normally responsible for merging the RTTI
+records, but it can only do so when the shared library exports them correctly.
+
+On Windows you must specify a DLL export/import annotation, and on other
+platforms it suffices to raise the visibility of the associated symbols.
+
+.. code-block:: cpp
+
+   /* TODO: Change 'MYLIB' to the name of your project. It's probably best to put
+      these into a common header file included by all parts of the project */
+   #if defined(_WIN32)
+   #  define MYLIB_EXPORT __declspec(dllexport)
+   #  define MYLIB_IMPORT __declspec(dllimport)
+   #else
+   #  define MYLIB_EXPORT __attribute__ ((visibility("default")))
+   #  define MYLIB_IMPORT __attribute__ ((visibility("default")))
+   #endif
+
+   #if defined(MYLIB_BUILD)
+   #  define MYLIB_API MYLIB_EXPORT
+   #else
+   #  define MYLIB_API MYLIB_IMPORT
+   #endif
+
+   /// Important: annotate the Class declaration with MYLIB_API
+   class MYLIB_API Foo {
+       // ... Foo definitions ..
+   };
+
+In the CMake build system, you must furthermore specify the ``-DMYLIB_BUILD``
+definition so that symbols are exported when building ``libfoo`` and imported
+by consumers of ``libfoo``.
+
+.. code-block:: cmake
+
+   target_compile_definitions(libfoo PRIVATE MYLIB_BUILD)
+
+.. _type-visibility:
+
+How can I avoid conflicts with other projects using nanobind?
+-------------------------------------------------------------
+
+Suppose that a type binding in your project conflicts with another extension, for
+example because both expose a common type (e.g., ``std::latch``). nanobind will
+warn whenever it detects such a conflict:
+
+.. code-block:: text
+
+  RuntimeWarning: nanobind: type 'latch' was already registered!
+
+In the worst case, this could actually break both packages (especially if the
+bindings of the two packages expose an inconsistent/incompatible API).
+
+The higher-level issue here is that nanobind will by default try to make type
+bindings visible across extensions because this is helpful to partition large
+binding projects into smaller parts. Such information exchange requires that
+the extensions:
+
+- use the same nanobind *ABI version* (see the :ref:`Changelog <changelog>` for details).
+- use the same compiler (extensions built with GCC and Clang are isolated from each other).
+- use ABI-compatible versions of the C++ library.
+- use the stable ABI interface consistently (stable and unstable builds are isolated from each other).
+- use debug/release mode consistently (debug and release builds are isolated from each other).
+
+In addition, nanobind provides a feature to intentionally scope extensions to a
+named domain to avoid conflicts with other extensions. To do so, specify the
+``NB_DOMAIN`` parameter in CMake:
+
+.. code-block:: cmake
+
+   nanobind_add_module(my_ext
+                       NB_DOMAIN my_project
+                       my_ext.cpp)
+
+In this case, inter-extension type visibility is furthermore restricted to
+extensions in the ``"my_project"`` domain.
 
 How to cite this project?
 -------------------------

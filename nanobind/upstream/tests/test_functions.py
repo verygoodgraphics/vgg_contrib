@@ -88,7 +88,8 @@ def test09_maketuple():
     assert t.test_tuple() == ("Hello", 123)
     with pytest.raises(RuntimeError) as excinfo:
         assert t.test_bad_tuple()
-    assert str(excinfo.value) == "nanobind::cast_error"
+    value = str(excinfo.value)
+    assert value == "std::bad_cast" or value == 'bad cast'
 
 
 def test10_cpp_call_simple():
@@ -136,6 +137,7 @@ def test13_call_guard():
     assert t.call_guard_value() == 0
     assert t.test_call_guard() == 1
     assert t.call_guard_value() == 2
+    assert t.test_call_guard_wrapper_rvalue_ref(1) == 1
     assert not t.test_release_gil()
 
 
@@ -307,3 +309,26 @@ def test34_module_docstring():
 def test35_return_capture():
     x = t.test_35()
     assert x() == 'Test Foo'
+
+def test36_test_char():
+    assert t.test_cast_char('c') == 'c'
+    with pytest.raises(TypeError):
+        assert t.test_cast_char('abc')
+    with pytest.raises(RuntimeError):
+        assert t.test_cast_char(123)
+
+def test37_test_str():
+    assert t.test_cast_str('c') == 'c'
+    assert t.test_cast_str('abc') == 'abc'
+    with pytest.raises(RuntimeError):
+        assert t.test_cast_str(123)
+
+def test38_set():
+    x = t.test_set()
+    assert isinstance(x, set)
+    assert len(x) == 2
+    assert 123 in x and '123' in x
+    assert t.test_set_contains(x, 123)
+    assert t.test_set_contains(x, '123')
+    assert not t.test_set_contains(x, '1234')
+    assert not t.test_set_contains(x, 1234)

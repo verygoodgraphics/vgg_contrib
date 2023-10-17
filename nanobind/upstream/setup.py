@@ -26,9 +26,11 @@ bindings compile in a shorter amount of time, produce smaller binaries, and
 have better runtime performance.
 
 More concretely,
-[benchmarks](https://nanobind.readthedocs.io/en/latest/benchmark.html) show
-**~2-3× faster** compile time, **~3× smaller** binaries, and up to **~8×
-lower** runtime overheads compared to pybind11.
+[benchmarks](https://nanobind.readthedocs.io/en/latest/benchmark.html) show up
+to **~4× faster** compile time, **~5× smaller** binaries, and **~10× lower**
+runtime overheads compared to pybind11. nanobind also outperforms Cython in
+important metrics (**3-12×** binary size reduction, **1.6-4×** compilation time
+reduction, similar runtime performance).
 
 Please see the following links for tutorial and reference documentation in
 [HTML](https://nanobind.readthedocs.io/en/latest/) and
@@ -68,7 +70,11 @@ with TemporaryDirectory() as temp_dir:
             'include/nanobind/stl/*.h',
             'include/nanobind/stl/detail/*.h',
             'include/nanobind/eigen/*.h',
-            'ext/robin_map/include/tsl/*.h',
+            'include/nanobind/intrusive/*.h',
+            'include/nanobind/intrusive/*.inl',
+            'ext/robin_map/include/tsl/robin_map.h',
+            'ext/robin_map/include/tsl/robin_hash.h',
+            'ext/robin_map/include/tsl/robin_growth_policy.h',
             'cmake/nanobind-config.cmake',
             'cmake/darwin-ld-cpython.sym',
             'cmake/darwin-ld-pypy.sym',

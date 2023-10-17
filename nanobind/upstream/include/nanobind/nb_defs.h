@@ -31,7 +31,7 @@
 # define  NB_STRDUP        _strdup
 #else
 #  define NB_EXPORT        __attribute__ ((visibility("default")))
-#  define NB_IMPORT        __attribute__ ((visibility("default")))
+#  define NB_IMPORT        NB_EXPORT
 #  define NB_INLINE        inline __attribute__((always_inline))
 #  define NB_NOINLINE      __attribute__((noinline))
 #if defined(__clang__)
@@ -63,11 +63,13 @@
 #    define NB_CORE NB_IMPORT
 #  endif
 #else
-#  if defined(_WIN32)
-#    define NB_CORE
-#  else
-#    define NB_CORE NB_EXPORT
-#  endif
+#  define NB_CORE
+#endif
+
+#if !defined(NB_SHARED) && defined(__GNUC__)
+#  define NB_EXPORT_SHARED __attribute__ ((visibility("hidden")))
+#else
+#  define NB_EXPORT_SHARED
 #endif
 
 #if defined(__cpp_lib_char8_t) && __cpp_lib_char8_t >= 201811L
@@ -117,6 +119,7 @@
 #  define NB_LIST_GET_ITEM PyList_GetItem
 #  define NB_LIST_SET_ITEM PyList_SetItem
 #  define NB_DICT_GET_SIZE PyDict_Size
+#  define NB_SET_GET_SIZE PySet_Size
 #else
 #  define NB_TUPLE_GET_SIZE PyTuple_GET_SIZE
 #  define NB_TUPLE_GET_ITEM PyTuple_GET_ITEM
@@ -125,10 +128,33 @@
 #  define NB_LIST_GET_ITEM PyList_GET_ITEM
 #  define NB_LIST_SET_ITEM PyList_SET_ITEM
 #  define NB_DICT_GET_SIZE PyDict_GET_SIZE
+#  define NB_SET_GET_SIZE PySet_GET_SIZE
 #endif
 
 #if defined(PYPY_VERSION_NUM) && PYPY_VERSION_NUM < 0x07030a00
 #    error "nanobind requires a newer PyPy version (>= 7.3.10)"
+#endif
+
+#if defined(NB_DOMAIN)
+#  define NB_DOMAIN_STR NB_TOSTRING(NB_DOMAIN)
+#else
+#  define NB_DOMAIN_STR nullptr
+#endif
+
+#if !defined(PYPY_VERSION)
+#  if PY_VERSION_HEX < 0x030A0000
+#    define NB_TYPE_GET_SLOT_IMPL 1 // Custom implementation of nb::type_get_slot
+#  else
+#    define NB_TYPE_GET_SLOT_IMPL 0
+#  endif
+#  if PY_VERSION_HEX < 0x030C0000
+#    define NB_TYPE_FROM_METACLASS_IMPL 1 // Custom implementation of PyType_FromMetaclass
+#  else
+#    define NB_TYPE_FROM_METACLASS_IMPL 0
+#  endif
+#else
+#  define NB_TYPE_FROM_METACLASS_IMPL 1
+#  define NB_TYPE_GET_SLOT_IMPL 1
 #endif
 
 #define NB_MODULE_IMPL(name)                                                   \
@@ -140,6 +166,7 @@
     [[maybe_unused]] static void NB_CONCAT(nanobind_init_,                     \
                                            name)(::nanobind::module_ &);       \
     NB_MODULE_IMPL(name) {                                                     \
+        nanobind::detail::init(NB_DOMAIN_STR);                                 \
         nanobind::module_ m =                                                  \
             nanobind::steal<nanobind::module_>(nanobind::detail::module_new(   \
                 NB_TOSTRING(name), &NB_CONCAT(nanobind_module_def_, name)));   \

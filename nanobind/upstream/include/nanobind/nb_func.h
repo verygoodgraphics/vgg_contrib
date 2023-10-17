@@ -22,7 +22,7 @@ NB_INLINE PyObject *func_create(Func &&func, Return (*)(Args...),
             [func = (forward_t<Func>) func](Args... args) NB_INLINE_LAMBDA {
                 typename Guard::type g;
                 (void) g;
-                return func(args...);
+                return func((forward_t<Args>) args...);
             },
             (Return(*)(Args...)) nullptr, is, extra...);
     }
@@ -88,7 +88,7 @@ NB_INLINE PyObject *func_create(Func &&func, Return (*)(Args...),
 
         if constexpr (!std::is_trivially_destructible_v<capture>) {
             f.flags |= (uint32_t) func_flags::has_free;
-            f.free = [](void *p) {
+            f.free_capture = [](void *p) {
                 ((capture *) p)->~capture();
             };
         }
@@ -97,7 +97,7 @@ NB_INLINE PyObject *func_create(Func &&func, Return (*)(Args...),
         cap[0] = new capture{ (forward_t<Func>) func };
 
         f.flags |= (uint32_t) func_flags::has_free;
-        f.free = [](void *p) {
+        f.free_capture = [](void *p) {
             delete (capture *) ((void **) p)[0];
         };
     }
@@ -121,12 +121,12 @@ NB_INLINE PyObject *func_create(Func &&func, Return (*)(Args...),
 
         PyObject *result;
         if constexpr (std::is_void_v<Return>) {
-            cap->func(((make_caster<Args>&&) in.template get<Is>()).operator cast_t<Args>()...);
+            cap->func(in.template get<Is>().operator cast_t<Args>()...);
             result = Py_None;
             Py_INCREF(result);
         } else {
             result = cast_out::from_cpp(
-                       cap->func(((make_caster<Args> &&) in.template get<Is>())
+                       cap->func((in.template get<Is>())
                                      .operator cast_t<Args>()...),
                        policy, cleanup).ptr();
         }

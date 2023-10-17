@@ -4,41 +4,71 @@ if (NOT TARGET Python::Module)
   message(FATAL_ERROR "You must invoke 'find_package(Python COMPONENTS Interpreter Development REQUIRED)' prior to including nanobind.")
 endif()
 
-# Determine the Python extension suffix and stash in the CMake cache
-execute_process(
-  COMMAND "${Python_EXECUTABLE}" "-c"
-    "import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX'))"
-  RESULT_VARIABLE NB_SUFFIX_RET
-  OUTPUT_VARIABLE NB_SUFFIX
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
+# Determine the right suffix for ordinary and stable ABI extensions.
 
-if (NB_SUFFIX_RET AND NOT NB_SUFFIX_RET EQUAL 0)
-  message(FATAL_ERROR "nanobind: Python sysconfig query to "
-    "find 'EXT_SUFFIX' property failed!")
+# We always need to know the extension
+if(WIN32)
+  set(NB_SUFFIX_EXT ".pyd")
+else()
+  set(NB_SUFFIX_EXT "${CMAKE_SHARED_MODULE_SUFFIX}")
 endif()
 
-set(NB_SUFFIX ${NB_SUFFIX} CACHE INTERNAL "")
+# This was added in CMake 3.17+, also available earlier in scikit-build-core.
+# PyPy sets an invalid SOABI (platform missing), causing older FindPythons to
+# report an incorrect value. Only use it if it looks correct (X-X-X form).
+if(DEFINED Python_SOABI AND "${Python_SOABI}" MATCHES ".+-.+-.+")
+  set(NB_SUFFIX ".${Python_SOABI}${NB_SUFFIX_EXT}")
+endif()
+
+# Python_SOSABI is guaranteed to be available in CMake 3.26+, and it may
+# also be available as part of backported FindPython in scikit-build-core.
+if(DEFINED Python_SOSABI)
+  if(Python_SOSABI STREQUAL "")
+    set(NB_SUFFIX_S "${NB_SUFFIX_EXT}")
+  else()
+    set(NB_SUFFIX_S ".${Python_SOSABI}${NB_SUFFIX_EXT}")
+  endif()
+endif()
+
+# If either suffix is missing, call Python to compute it
+if(NOT DEFINED NB_SUFFIX OR NOT DEFINED NB_SUFFIX_S)
+  # Query Python directly to get the right suffix.
+  execute_process(
+    COMMAND "${Python_EXECUTABLE}" "-c"
+      "import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX'))"
+    RESULT_VARIABLE NB_SUFFIX_RET
+    OUTPUT_VARIABLE EXT_SUFFIX
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  if(NB_SUFFIX_RET AND NOT NB_SUFFIX_RET EQUAL 0)
+    message(FATAL_ERROR "nanobind: Python sysconfig query to "
+      "find 'EXT_SUFFIX' property failed!")
+  endif()
+
+  if(NOT DEFINED NB_SUFFIX)
+    set(NB_SUFFIX "${EXT_SUFFIX}")
+  endif()
+
+  if(NOT DEFINED NB_SUFFIX_S)
+    get_filename_component(NB_SUFFIX_EXT "${EXT_SUFFIX}" LAST_EXT)
+    if(WIN32)
+      set(NB_SUFFIX_S "${NB_SUFFIX_EXT}")
+    else()
+      set(NB_SUFFIX_S ".abi3${NB_SUFFIX_EXT}")
+    endif()
+  endif()
+endif()
+
+# Stash these for later use
+set(NB_SUFFIX   ${NB_SUFFIX}   CACHE INTERNAL "")
+set(NB_SUFFIX_S ${NB_SUFFIX_S} CACHE INTERNAL "")
 
 get_filename_component(NB_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 get_filename_component(NB_DIR "${NB_DIR}" PATH)
-set(NB_DIR ${NB_DIR} CACHE INTERNAL "")
 
-# ---------------------------------------------------------------------------
-# Helper function to strip unnecessary sections from binaries on Linux/macOS
-# ---------------------------------------------------------------------------
-
-function(nanobind_strip name)
-  if (CMAKE_STRIP AND NOT MSVC AND NOT CMAKE_BUILD_TYPE MATCHES Debug|RelWithDebInfo)
-    if(APPLE)
-      set(NB_STRIP_OPT -x)
-    endif()
-
-    add_custom_command(
-      TARGET ${name}
-      POST_BUILD
-      COMMAND ${CMAKE_STRIP} ${NB_STRIP_OPT} $<TARGET_FILE:${name}>)
-  endif()
-endfunction()
+set(NB_DIR      ${NB_DIR} CACHE INTERNAL "")
+set(NB_OPT      $<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>> CACHE INTERNAL "")
+set(NB_OPT_SIZE $<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>,$<CONFIG:RelWithDebInfo>> CACHE INTERNAL "")
 
 # ---------------------------------------------------------------------------
 # Helper function to handle undefined CPython API symbols on macOS
@@ -51,7 +81,7 @@ function (nanobind_link_options name)
     else()
       set(NB_LINKER_RESPONSE_FILE darwin-ld-cpython.sym)
     endif()
-    target_link_options(${name} PRIVATE "-Wl,-dead_strip" "-Wl,@${NB_DIR}/cmake/${NB_LINKER_RESPONSE_FILE}")
+    target_link_options(${name} PRIVATE "-Wl,@${NB_DIR}/cmake/${NB_LINKER_RESPONSE_FILE}")
   endif()
 endfunction()
 
@@ -128,6 +158,7 @@ function (nanobind_build_library TARGET_NAME)
     ${NB_DIR}/src/nb_type.cpp
     ${NB_DIR}/src/nb_enum.cpp
     ${NB_DIR}/src/nb_ndarray.cpp
+    ${NB_DIR}/src/nb_static_property.cpp
     ${NB_DIR}/src/common.cpp
     ${NB_DIR}/src/error.cpp
     ${NB_DIR}/src/trampoline.cpp
@@ -138,13 +169,12 @@ function (nanobind_build_library TARGET_NAME)
     nanobind_link_options(${TARGET_NAME})
     target_compile_definitions(${TARGET_NAME} PRIVATE -DNB_BUILD)
     target_compile_definitions(${TARGET_NAME} PUBLIC -DNB_SHARED)
-    nanobind_strip(${TARGET_NAME})
-  endif()
+    nanobind_lto(${TARGET_NAME})
 
-  if ((TARGET_TYPE STREQUAL "SHARED") OR (TARGET_NAME MATCHES "-lto"))
-    set_target_properties(${TARGET_NAME} PROPERTIES
-      INTERPROCEDURAL_OPTIMIZATION_RELEASE ON
-      INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL ON)
+    nanobind_strip(${TARGET_NAME})
+  elseif(NOT WIN32 AND NOT APPLE)
+    target_compile_options(${TARGET_NAME} PUBLIC $<${NB_OPT_SIZE}:-ffunction-sections -fdata-sections>)
+    target_link_options(${TARGET_NAME} PUBLIC $<${NB_OPT_SIZE}:-Wl,--gc-sections>)
   endif()
 
   set_target_properties(${TARGET_NAME} PROPERTIES
@@ -154,6 +184,7 @@ function (nanobind_build_library TARGET_NAME)
     # Do not complain about vsnprintf
     target_compile_definitions(${TARGET_NAME} PRIVATE -D_CRT_SECURE_NO_WARNINGS)
   else()
+    # Generally needed to handle type punning in Python code
     target_compile_options(${TARGET_NAME} PRIVATE -fno-strict-aliasing)
   endif()
 
@@ -165,6 +196,11 @@ function (nanobind_build_library TARGET_NAME)
     endif()
   endif()
 
+  # Nanobind performs many assertion checks -- detailed error messages aren't
+  # included in Release/MinSizeRel modes
+  target_compile_definitions(${TARGET_NAME} PRIVATE
+    $<${NB_OPT_SIZE}:NB_COMPACT_ASSERTIONS>)
+
   target_include_directories(${TARGET_NAME} PRIVATE
     ${NB_DIR}/ext/robin_map/include)
 
@@ -173,6 +209,7 @@ function (nanobind_build_library TARGET_NAME)
     ${NB_DIR}/include)
 
   target_compile_features(${TARGET_NAME} PUBLIC cxx_std_17)
+  nanobind_set_visibility(${TARGET_NAME})
 endfunction()
 
 # ---------------------------------------------------------------------------
@@ -181,15 +218,10 @@ endfunction()
 
 function(nanobind_opt_size name)
   if (MSVC)
-    set(NB_OPT_SIZE /Os)
+    target_compile_options(${name} PRIVATE $<${NB_OPT_SIZE}:/Os>)
   else()
-    set(NB_OPT_SIZE -Os)
+    target_compile_options(${name} PRIVATE $<${NB_OPT_SIZE}:-Os>)
   endif()
-
-  target_compile_options(${name} PRIVATE
-      $<$<CONFIG:Release>:${NB_OPT_SIZE}>
-      $<$<CONFIG:MinSizeRel>:${NB_OPT_SIZE}>
-      $<$<CONFIG:RelWithDebInfo>:${NB_OPT_SIZE}>)
 endfunction()
 
 function(nanobind_disable_stack_protector name)
@@ -197,10 +229,7 @@ function(nanobind_disable_stack_protector name)
     # The stack protector affects binding size negatively (+8% on Linux in my
     # benchmarks). Protecting from stack smashing in a Python VM seems in any
     # case futile, so let's get rid of it by default in optimized modes.
-    target_compile_options(${name} PRIVATE
-        $<$<CONFIG:Release>:-fno-stack-protector>
-        $<$<CONFIG:MinSizeRel>:-fno-stack-protector>
-        $<$<CONFIG:RelWithDebInfo>:-fno-stack-protector>)
+    target_compile_options(${name} PRIVATE $<${NB_OPT}:-fno-stack-protector>)
   endif()
 endfunction()
 
@@ -209,8 +238,7 @@ function(nanobind_extension name)
 endfunction()
 
 function(nanobind_extension_abi3 name)
-  get_filename_component(ext "${NB_SUFFIX}" LAST_EXT)
-  set_target_properties(${name} PROPERTIES PREFIX "" SUFFIX ".abi3${ext}")
+  set_target_properties(${name} PROPERTIES PREFIX "" SUFFIX "${NB_SUFFIX_S}")
 endfunction()
 
 function (nanobind_lto name)
@@ -219,14 +247,34 @@ function (nanobind_lto name)
     INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL ON)
 endfunction()
 
-function (nanobind_compile_options)
+function (nanobind_compile_options name)
   if (MSVC)
     target_compile_options(${name} PRIVATE /bigobj /MP)
   endif()
 endfunction()
 
+function (nanobind_strip name)
+  if (APPLE)
+    target_link_options(${name} PRIVATE $<${NB_OPT}:-Wl,-dead_strip -Wl,-x -Wl,-S>)
+  elseif (NOT WIN32)
+    target_link_options(${name} PRIVATE $<${NB_OPT}:-Wl,-s>)
+  endif()
+endfunction()
+
+function (nanobind_set_visibility name)
+  set_target_properties(${name} PROPERTIES CXX_VISIBILITY_PRESET hidden)
+endfunction()
+
+function (nanobind_musl_static_libcpp name)
+  if ("$ENV{AUDITWHEEL_PLAT}" MATCHES "musllinux")
+    target_link_options(${name} PRIVATE -static-libstdc++ -static-libgcc)
+  endif()
+endfunction()
+
 function(nanobind_add_module name)
-  cmake_parse_arguments(PARSE_ARGV 1 ARG "NOMINSIZE;STABLE_ABI;NOSTRIP;NB_STATIC;NB_SHARED;PROTECT_STACK;LTO" "" "")
+  cmake_parse_arguments(PARSE_ARGV 1 ARG
+    "STABLE_ABI;NB_STATIC;NB_SHARED;PROTECT_STACK;LTO;NOMINSIZE;NOSTRIP;MUSL_DYNAMIC_LIBCPP"
+    "NB_DOMAIN" "")
 
   add_library(${name} MODULE ${ARG_UNPARSED_ARGUMENTS})
 
@@ -240,24 +288,11 @@ function(nanobind_add_module name)
     set(ARG_NB_STATIC TRUE)
   endif()
 
-  # Stable ABI interface requires Python >= 3.12
-  if (ARG_STABLE_ABI AND (Python_VERSION_MAJOR EQUAL 3) AND (Python_VERSION_MINOR LESS 12))
-    set(ARG_STABLE_ABI OFF)
-  endif()
-
-  # Stable API interface requires CPython (PyPy isn't supported)
-  if (ARG_STABLE_ABI AND NOT (Python_INTERPRETER_ID STREQUAL "Python"))
-    set(ARG_STABLE_ABI OFF)
-  endif()
-
-  # On Windows, use of the stable ABI requires a very recent CMake version
-  if (ARG_STABLE_API AND WIN32 AND NOT TARGET Python::SABIModule)
-    if (CMAKE_VERSION VERSION_LESS 3.26)
-      message(WARNING "To build stable ABI packages on Windows, you must use CMake version 3.26 or newer!")
-    else()
-      message(WARNING "To build stable ABI packages on Windows, you must invoke 'find_package(Python COMPONENTS Interpreter Development.Module Development.SABIModule REQUIRED)' prior to including nanobind.")
-    endif()
-    set(ARG_STABLE_ABI OFF)
+  # Stable ABI builds require CPython >= 3.12 and Python::SABIModule
+  if ((Python_VERSION VERSION_LESS 3.12) OR
+      (NOT Python_INTERPRETER_ID STREQUAL "Python") OR
+      (NOT TARGET Python::SABIModule))
+    set(ARG_STABLE_ABI FALSE)
   endif()
 
   set(libname "nanobind")
@@ -269,12 +304,15 @@ function(nanobind_add_module name)
     set(libname "${libname}-abi3")
   endif()
 
-  # Shared builds always use LTO for release builds of the library component
-  if (ARG_LTO AND NOT ARG_NB_STATIC)
-    set(libname "${libname}-lto")
+  if (ARG_NB_DOMAIN AND ARG_NB_SHARED)
+    set(libname ${libname}-${ARG_NB_DOMAIN})
   endif()
 
   nanobind_build_library(${libname})
+
+  if (ARG_NB_DOMAIN)
+    target_compile_definitions(${name} PRIVATE NB_DOMAIN=${ARG_NB_DOMAIN})
+  endif()
 
   if (ARG_STABLE_ABI)
     target_compile_definitions(${libname} PUBLIC -DPy_LIMITED_API=0x030C0000)
@@ -301,5 +339,9 @@ function(nanobind_add_module name)
     nanobind_lto(${name})
   endif()
 
-  set_target_properties(${name} PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  if (ARG_NB_STATIC AND NOT ARG_MUSL_DYNAMIC_LIBCPP)
+    nanobind_musl_static_libcpp(${name})
+  endif()
+
+  nanobind_set_visibility(${name})
 endfunction()

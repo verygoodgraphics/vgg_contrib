@@ -132,6 +132,31 @@ struct detector<std::void_t<Op<Arg>>, Op, Arg>
    avoid redundancy when combined with nb::arg(...).none(). */
 template <typename T> struct remove_opt_mono { using type = T; };
 
+// Detect std::enable_shared_from_this without including <memory>
+template <typename T>
+auto has_shared_from_this_impl(T *ptr) ->
+    decltype(ptr->weak_from_this().lock().get(), std::true_type{});
+std::false_type has_shared_from_this_impl(...);
+
+template <typename T>
+constexpr bool has_shared_from_this_v =
+    decltype(has_shared_from_this_impl((T *) nullptr))::value;
+
+/// Base of all type casters for traditional bindings created via nanobind::class_<>
+struct type_caster_base_tag {
+    static constexpr bool IsClass = true;
+};
+
+/// Check if a type caster represents traditional bindings created via nanobind::class_<>
+template <typename Caster>
+constexpr bool is_base_caster_v = std::is_base_of_v<type_caster_base_tag, Caster>;
+
+template <typename T> using is_class_caster_test = std::enable_if_t<T::IsClass>;
+
+/// Generalized version of the is_base_caster_v test that also accepts unique_ptr/shared_ptr
+template <typename Caster>
+constexpr bool is_class_caster_v = detail::detector<void, is_class_caster_test, Caster>::value;
+
 NAMESPACE_END(detail)
 
 template <typename... Args>

@@ -10,6 +10,11 @@
 NAMESPACE_BEGIN(NB_NAMESPACE)
 NAMESPACE_BEGIN(detail)
 
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 6255) // _alloca indicates failure by raising a stack overflow exception
+#endif
+
 class kwargs_proxy : public handle {
 public:
     explicit kwargs_proxy(handle h) : handle(h) { }
@@ -68,8 +73,7 @@ NB_INLINE void call_init(PyObject **args, PyObject *kwnames, size_t &nargs,
         }
     } else {
         args[nargs++] =
-            make_caster<T>::from_cpp((forward_t<T>) value,
-                                     detail::infer_policy<T>(policy), nullptr).ptr();
+            make_caster<T>::from_cpp((forward_t<T>) value, policy, nullptr).ptr();
     }
     (void) args; (void) kwnames; (void) nargs;
     (void) nkwargs; (void) kwargs_offset;
@@ -109,6 +113,7 @@ object api<Derived>::operator()(Args &&...args_) const {
         // Allocate memory on the stack
         PyObject **args =
             (PyObject **) alloca((nargs + nkwargs + 1) * sizeof(PyObject *));
+
         PyObject *kwnames =
             nkwargs ? PyTuple_New((Py_ssize_t) nkwargs) : nullptr;
 
@@ -133,6 +138,10 @@ object api<Derived>::operator()(Args &&...args_) const {
 }
 
 #undef NB_DO_VECTORCALL
+
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#endif
 
 NAMESPACE_END(detail)
 NAMESPACE_END(NB_NAMESPACE)
