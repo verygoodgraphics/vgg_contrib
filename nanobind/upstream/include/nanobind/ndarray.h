@@ -13,6 +13,7 @@
 #pragma once
 
 #include <nanobind/nanobind.h>
+#include <initializer_list>
 
 NAMESPACE_BEGIN(NB_NAMESPACE)
 
@@ -77,20 +78,44 @@ struct numpy { };
 struct tensorflow { };
 struct pytorch { };
 struct jax { };
+struct ro { };
+
+template <typename T> struct ndarray_traits {
+    static constexpr bool is_float  = std::is_floating_point_v<T>;
+    static constexpr bool is_bool   = std::is_same_v<std::remove_cv_t<T>, bool>;
+    static constexpr bool is_int    = std::is_integral_v<T> && !is_bool;
+    static constexpr bool is_signed = std::is_signed_v<T>;
+};
+
+NAMESPACE_BEGIN(detail)
+
+template <typename T>
+constexpr bool is_ndarray_scalar_v =
+    ndarray_traits<T>::is_float || ndarray_traits<T>::is_int ||
+    ndarray_traits<T>::is_bool;
+
+template <typename> struct ndim_shape;
+template <size_t... S> struct ndim_shape<std::index_sequence<S...>> {
+    using type = shape<((void) S, any)...>;
+};
+
+NAMESPACE_END(detail)
+
+template <size_t N> using ndim = typename detail::ndim_shape<std::make_index_sequence<N>>::type;
 
 template <typename T> constexpr dlpack::dtype dtype() {
     static_assert(
-        std::is_floating_point_v<T> || std::is_integral_v<T>,
+        detail::is_ndarray_scalar_v<T>,
         "nanobind::dtype<T>: T must be a floating point or integer variable!"
     );
 
     dlpack::dtype result;
 
-    if constexpr (std::is_floating_point_v<T>)
+    if constexpr (ndarray_traits<T>::is_float)
         result.code = (uint8_t) dlpack::dtype_code::Float;
-    else if constexpr (std::is_signed_v<T>)
+    else if constexpr (ndarray_traits<T>::is_signed)
         result.code = (uint8_t) dlpack::dtype_code::Int;
-    else if constexpr (std::is_same_v<T, bool>)
+    else if constexpr (std::is_same_v<std::remove_cv_t<T>, bool>)
         result.code = (uint8_t) dlpack::dtype_code::Bool;
     else
         result.code = (uint8_t) dlpack::dtype_code::UInt;
@@ -112,6 +137,7 @@ struct ndarray_req {
     size_t *shape = nullptr;
     bool req_shape = false;
     bool req_dtype = false;
+    bool req_ro = false;
     char req_order = '\0';
     uint8_t req_device = 0;
 };
@@ -122,39 +148,58 @@ template <typename T, typename = int> struct ndarray_arg {
     static void apply(ndarray_req &) { }
 };
 
-template <typename T> struct ndarray_arg<T, enable_if_t<std::is_floating_point_v<T>>> {
+template <typename T> struct ndarray_arg<T, enable_if_t<ndarray_traits<T>::is_float>> {
     static constexpr size_t size = 0;
 
     static constexpr auto name =
-        const_name("dtype=float") + const_name<sizeof(T) * 8>();
+        const_name("dtype=float") +
+        const_name<sizeof(T) * 8>() +
+        const_name<std::is_const_v<T>>(", writable=False", "");
 
     static void apply(ndarray_req &tr) {
         tr.dtype = dtype<T>();
         tr.req_dtype = true;
+        tr.req_ro = std::is_const_v<T>;
     }
 };
 
-template <typename T> struct ndarray_arg<T, enable_if_t<std::is_integral_v<T> && !std::is_same_v<T, bool>>> {
+template <typename T> struct ndarray_arg<T, enable_if_t<ndarray_traits<T>::is_int>> {
     static constexpr size_t size = 0;
 
     static constexpr auto name =
-        const_name("dtype=") + const_name<std::is_unsigned_v<T>>("u", "") +
-        const_name("int") + const_name<sizeof(T) * 8>();
+        const_name("dtype=") +
+        const_name<std::is_unsigned_v<T>>("u", "") +
+        const_name("int") + const_name<sizeof(T) * 8>() +
+        const_name<std::is_const_v<T>>(", writable=False", "");
 
     static void apply(ndarray_req &tr) {
         tr.dtype = dtype<T>();
         tr.req_dtype = true;
+        tr.req_ro = std::is_const_v<T>;
     }
 };
 
-template <typename T> struct ndarray_arg<T, enable_if_t<std::is_same_v<T, bool>>> {
+template <typename T> struct ndarray_arg<T, enable_if_t<ndarray_traits<T>::is_bool>> {
     static constexpr size_t size = 0;
 
-    static constexpr auto name = const_name("dtype=bool");
+    static constexpr auto name =
+        const_name("dtype=bool") +
+        const_name<std::is_const_v<T>>(", writable=False", "");
 
     static void apply(ndarray_req &tr) {
         tr.dtype = dtype<T>();
         tr.req_dtype = true;
+        tr.req_ro |= std::is_const_v<T>;
+    }
+};
+
+template<> struct ndarray_arg<ro> {
+    static constexpr size_t size = 0;
+
+    static constexpr auto name = const_name("writable=False");
+
+    static void apply(ndarray_req &tr) {
+        tr.req_ro = true;
     }
 };
 
@@ -202,16 +247,25 @@ template <typename... Ts> struct ndarray_info {
     using shape_type = void;
     constexpr static auto name = const_name("ndarray");
     constexpr static ndarray_framework framework = ndarray_framework::none;
+    constexpr static char order = '\0';
 };
 
 template <typename T, typename... Ts> struct ndarray_info<T, Ts...>  : ndarray_info<Ts...> {
     using scalar_type =
-        std::conditional_t<std::is_scalar_v<T>, T,
-                           typename ndarray_info<Ts...>::scalar_type>;
+        std::conditional_t<ndarray_traits<T>::is_float || ndarray_traits<T>::is_int ||
+                           ndarray_traits<T>::is_bool, T, typename ndarray_info<Ts...>::scalar_type>;
 };
 
 template <size_t... Is, typename... Ts> struct ndarray_info<shape<Is...>, Ts...> : ndarray_info<Ts...> {
     using shape_type = shape<Is...>;
+};
+
+template <typename... Ts> struct ndarray_info<c_contig, Ts...> : ndarray_info<Ts...> {
+    constexpr static char order = 'C';
+};
+
+template <typename... Ts> struct ndarray_info<f_contig, Ts...> : ndarray_info<Ts...> {
+    constexpr static char order = 'F';
 };
 
 template <typename... Ts> struct ndarray_info<numpy, Ts...> : ndarray_info<Ts...> {
@@ -234,10 +288,71 @@ template <typename... Ts> struct ndarray_info<jax, Ts...> : ndarray_info<Ts...> 
     constexpr static ndarray_framework framework = ndarray_framework::jax;
 };
 
+
 NAMESPACE_END(detail)
+
+template <typename Scalar, typename Shape, char Order> struct ndarray_view {
+    static constexpr size_t Dim = Shape::size;
+
+    ndarray_view() = default;
+    ndarray_view(const ndarray_view &) = default;
+    ndarray_view(ndarray_view &&) = default;
+    ndarray_view &operator=(const ndarray_view &) = default;
+    ndarray_view &operator=(ndarray_view &&) noexcept = default;
+    ~ndarray_view() noexcept = default;
+
+    template <typename... Ts> NB_INLINE Scalar &operator()(Ts... indices) const {
+        static_assert(
+            sizeof...(Ts) == Dim,
+            "ndarray_view::operator(): invalid number of arguments");
+
+        const int64_t indices_i64[] { (int64_t) indices... };
+        int64_t offset = 0;
+        for (size_t i = 0; i < Dim; ++i)
+            offset += indices_i64[i] * m_strides[i];
+
+        return *(m_data + offset);
+    }
+
+    size_t ndim() const { return Dim; }
+    size_t shape(size_t i) const { return m_shape[i]; }
+    int64_t stride(size_t i) const { return m_strides[i]; }
+    Scalar *data() const { return m_data; }
+
+private:
+    template <typename...> friend class ndarray;
+
+    template <size_t... I1, size_t... I2>
+    ndarray_view(Scalar *data, const int64_t *shape, const int64_t *strides,
+                 std::index_sequence<I1...>, nanobind::shape<I2...>)
+        : m_data(data) {
+
+        /* Initialize shape/strides with compile-time knowledge if
+           available (to permit vectorization, loop unrolling, etc.) */
+        ((m_shape[I1] = (I2 == any) ? shape[I1] : I2), ...);
+        ((m_strides[I1] = strides[I1]), ...);
+
+        if constexpr (Order == 'F') {
+            m_strides[0] = 1;
+            for (size_t i = 1; i < Dim; ++i)
+                m_strides[i] = m_strides[i - 1] * m_shape[i - 1];
+        } else if constexpr (Order == 'C') {
+            m_strides[Dim - 1] = 1;
+            for (Py_ssize_t i = (Py_ssize_t) Dim - 2; i >= 0; --i)
+                m_strides[i] = m_strides[i + 1] * m_shape[i + 1];
+        }
+    }
+
+    Scalar *m_data = nullptr;
+    int64_t m_shape[Dim] { };
+    int64_t m_strides[Dim] { };
+};
+
 
 template <typename... Args> class ndarray {
 public:
+    template <typename...> friend class ndarray;
+
     using Info = detail::ndarray_info<Args...>;
     using Scalar = typename Info::scalar_type;
 
@@ -248,7 +363,10 @@ public:
             m_dltensor = *detail::ndarray_inc_ref(handle);
     }
 
-    ndarray(void *value,
+    template <typename... Args2>
+    explicit ndarray(const ndarray<Args2...> &other) : ndarray(other.m_handle) { }
+
+    ndarray(std::conditional_t<std::is_const_v<Scalar>, const void *, void *> value,
             size_t ndim,
             const size_t *shape,
             handle owner = nanobind::handle(),
@@ -256,9 +374,28 @@ public:
             dlpack::dtype dtype = nanobind::dtype<Scalar>(),
             int32_t device_type = device::cpu::value,
             int32_t device_id = 0) {
-        m_handle =
-            detail::ndarray_create(value, ndim, shape, owner.ptr(), strides,
-                                  &dtype, device_type, device_id);
+        m_handle = detail::ndarray_create(
+            (void *) value, ndim, shape, owner.ptr(), strides, &dtype,
+            std::is_const_v<Scalar>, device_type, device_id);
+        m_dltensor = *detail::ndarray_inc_ref(m_handle);
+    }
+
+    ndarray(std::conditional_t<std::is_const_v<Scalar>, const void *, void *> value,
+            std::initializer_list<size_t> shape,
+            handle owner = nanobind::handle(),
+            std::initializer_list<int64_t> strides = { },
+            dlpack::dtype dtype = nanobind::dtype<Scalar>(),
+            int32_t device_type = device::cpu::value,
+            int32_t device_id = 0) {
+
+        if (strides.size() != 0 && strides.size() != shape.size())
+            detail::fail("ndarray(): shape and strides have incompatible size!");
+
+        m_handle = detail::ndarray_create(
+            (void *) value, shape.size(), shape.begin(), owner.ptr(),
+            (strides.size() == 0) ? nullptr : strides.begin(), &dtype,
+            std::is_const_v<Scalar>, device_type, device_id);
+
         m_dltensor = *detail::ndarray_inc_ref(m_handle);
     }
 
@@ -296,8 +433,8 @@ public:
     size_t ndim() const { return (size_t) m_dltensor.ndim; }
     size_t shape(size_t i) const { return (size_t) m_dltensor.shape[i]; }
     int64_t stride(size_t i) const { return m_dltensor.strides[i]; }
-    int64_t* shape_ptr() const { return m_dltensor.shape; }
-    int64_t* stride_ptr() const { return m_dltensor.strides; }
+    const int64_t* shape_ptr() const { return m_dltensor.shape; }
+    const int64_t* stride_ptr() const { return m_dltensor.strides; }
     bool is_valid() const { return m_handle != nullptr; }
     int32_t device_type() const { return m_dltensor.device.device_type; }
     int32_t device_id() const { return m_dltensor.device.device_id; }
@@ -310,36 +447,91 @@ public:
         return ret;
     }
 
+    size_t itemsize() const { return ((size_t) dtype().bits + 7) / 8; }
+    size_t nbytes() const { return ((size_t) dtype().bits * size() + 7) / 8; }
+
     const Scalar *data() const {
         return (const Scalar *)((const uint8_t *) m_dltensor.data + m_dltensor.byte_offset);
     }
 
-    Scalar *data() { return (Scalar *)((uint8_t *) m_dltensor.data + m_dltensor.byte_offset); }
+    template <typename T = Scalar, std::enable_if_t<!std::is_const_v<T>, int> = 1>
+    Scalar *data() {
+        return (Scalar *) ((uint8_t *) m_dltensor.data +
+                           m_dltensor.byte_offset);
+    }
 
-    template <typename... Ts>
-    NB_INLINE auto& operator()(Ts... indices) {
-        static_assert(
-            !std::is_same_v<Scalar, void>,
-            "To use nb::ndarray::operator(), you must add a scalar type "
-            "annotation (e.g. 'float') to the ndarray template parameters.");
-        static_assert(
-            !std::is_same_v<Scalar, void>,
-            "To use nb::ndarray::operator(), you must add a nb::shape<> "
-            "annotation to the ndarray template parameters.");
-        static_assert(sizeof...(Ts) == Info::shape_type::size,
-                      "nb::ndarray::operator(): invalid number of arguments");
+    template <typename T = Scalar,
+              std::enable_if_t<!std::is_const_v<T>, int> = 1, typename... Ts>
+    NB_INLINE auto &operator()(Ts... indices) {
+        return *(Scalar *) ((uint8_t *) m_dltensor.data +
+                            byte_offset(indices...));
+    }
 
-        int64_t counter = 0, index = 0;
-        ((index += int64_t(indices) * m_dltensor.strides[counter++]), ...);
-        return (Scalar &) *(
-            (uint8_t *) m_dltensor.data + m_dltensor.byte_offset +
-            index * sizeof(typename Info::scalar_type));
+    template <typename... Ts> NB_INLINE const auto & operator()(Ts... indices) const {
+        return *(const Scalar *) ((const uint8_t *) m_dltensor.data +
+                                  byte_offset(indices...));
+    }
+
+    template <typename... Extra> NB_INLINE auto view() {
+        using Info2 = typename ndarray<Args..., Extra...>::Info;
+        using Scalar2 = typename Info2::scalar_type;
+        using Shape2 = typename Info2::shape_type;
+
+        constexpr bool has_scalar = !std::is_same_v<Scalar2, void>,
+                       has_shape  = !std::is_same_v<Shape2, void>;
+
+        static_assert(has_scalar,
+            "To use the ndarray::view<..>() method, you must add a scalar type "
+            "annotation (e.g. 'float') to the template parameters of the parent "
+            "ndarray, or to the call to .view<..>()");
+
+        static_assert(has_shape,
+            "To use the ndarray::view<..>() method, you must add a shape<..> "
+            "or ndim<..> annotation to the template parameters of the parent "
+            "ndarray, or to the call to .view<..>()");
+
+        if constexpr (has_scalar && has_shape) {
+            return ndarray_view<Scalar2, Shape2, Info2::order>(
+                (Scalar2 *) data(), shape_ptr(), stride_ptr(),
+                std::make_index_sequence<Shape2::size>(), Shape2());
+        } else {
+            return nullptr;
+        }
     }
 
 private:
+    template <typename... Ts>
+    NB_INLINE int64_t byte_offset(Ts... indices) const {
+        constexpr bool has_scalar = !std::is_same_v<Scalar, void>,
+                       has_shape = !std::is_same_v<typename Info::shape_type, void>;
+
+        static_assert(has_scalar,
+            "To use ndarray::operator(), you must add a scalar type "
+            "annotation (e.g. 'float') to the ndarray template parameters.");
+
+        static_assert(has_shape,
+            "To use ndarray::operator(), you must add a shape<> or "
+            "ndim<> annotation to the ndarray template parameters.");
+
+        if constexpr (has_scalar && has_shape) {
+            static_assert(sizeof...(Ts) == Info::shape_type::size,
+                          "ndarray::operator(): invalid number of arguments");
+
+            size_t counter = 0;
+            int64_t index = 0;
+            ((index += int64_t(indices) * m_dltensor.strides[counter++]), ...);
+
+            return (int64_t) m_dltensor.byte_offset + index * sizeof(typename Info::scalar_type);
+        } else {
+            return 0;
+        }
+    }
+
     detail::ndarray_handle *m_handle = nullptr;
     dlpack::dltensor m_dltensor;
 };
+
+inline bool ndarray_check(handle h) { return detail::ndarray_check(h.ptr()); }
 
 NAMESPACE_BEGIN(detail)
 
@@ -360,8 +552,8 @@ template <typename... Args> struct type_caster<ndarray<Args...>> {
     }
 
     static handle from_cpp(const ndarray<Args...> &tensor, rv_policy policy,
-                           cleanup_list *) noexcept {
-        return ndarray_wrap(tensor.handle(), int(Value::Info::framework), policy);
+                           cleanup_list *cleanup) noexcept {
+        return ndarray_wrap(tensor.handle(), int(Value::Info::framework), policy, cleanup);
     }
 };
 

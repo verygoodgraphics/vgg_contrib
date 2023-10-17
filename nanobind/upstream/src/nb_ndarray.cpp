@@ -16,26 +16,21 @@ struct managed_dltensor {
 struct ndarray_handle {
     managed_dltensor *ndarray;
     std::atomic<size_t> refcount;
-    PyObject *owner;
+    PyObject *owner, *self;
     bool free_shape;
     bool free_strides;
     bool call_deleter;
+    bool ro;
 };
 
-void nb_ndarray_dealloc(PyObject *self) {
+static void nb_ndarray_dealloc(PyObject *self) {
+    PyTypeObject *tp = Py_TYPE(self);
     ndarray_dec_ref(((nb_ndarray *) self)->th);
-
-    freefunc tp_free;
-#if defined(Py_LIMITED_API)
-    tp_free = (freefunc) PyType_GetSlot(Py_TYPE(self), Py_tp_free);
-#else
-    tp_free = Py_TYPE(self)->tp_free;
-#endif
-
-    tp_free(self);
+    PyObject_Free(self);
+    Py_DECREF(tp);
 }
 
-int nb_ndarray_getbuffer(PyObject *exporter, Py_buffer *view, int) {
+static int nd_ndarray_tpbuffer(PyObject *exporter, Py_buffer *view, int) {
     nb_ndarray *self = (nb_ndarray *) exporter;
 
     dlpack::dltensor &t = self->th->ndarray->dltensor;
@@ -96,8 +91,10 @@ int nb_ndarray_getbuffer(PyObject *exporter, Py_buffer *view, int) {
     Py_INCREF(exporter);
 
     Py_ssize_t len = view->itemsize;
-    scoped_pymalloc<Py_ssize_t> strides(t.ndim), shape(t.ndim);
-    for (int32_t i = 0; i < t.ndim; ++i) {
+    scoped_pymalloc<Py_ssize_t> strides((size_t) t.ndim),
+                                  shape((size_t) t.ndim);
+
+    for (size_t i = 0; i < (size_t) t.ndim; ++i) {
         len *= (Py_ssize_t) t.shape[i];
         strides[i] = (Py_ssize_t) t.strides[i] * view->itemsize;
         shape[i] = (Py_ssize_t) t.shape[i];
@@ -105,7 +102,7 @@ int nb_ndarray_getbuffer(PyObject *exporter, Py_buffer *view, int) {
 
     view->ndim = t.ndim;
     view->len = len;
-    view->readonly = false;
+    view->readonly = self->th->ro;
     view->suboffsets = nullptr;
     view->internal = nullptr;
     view->strides = strides.release();
@@ -114,16 +111,52 @@ int nb_ndarray_getbuffer(PyObject *exporter, Py_buffer *view, int) {
     return 0;
 }
 
-void nb_ndarray_releasebuffer(PyObject *, Py_buffer *view) {
+static void nb_ndarray_releasebuffer(PyObject *, Py_buffer *view) {
     PyMem_Free(view->shape);
     PyMem_Free(view->strides);
 }
 
-static PyObject *dlpack_from_buffer_protocol(PyObject *o) {
+static PyTypeObject *nd_ndarray_tp() noexcept {
+    PyTypeObject *tp = internals->nb_ndarray;
+
+    if (NB_UNLIKELY(!tp)) {
+        PyType_Slot slots[] = {
+            { Py_tp_dealloc, (void *) nb_ndarray_dealloc },
+#if PY_VERSION_HEX >= 0x03090000
+            { Py_bf_getbuffer, (void *) nd_ndarray_tpbuffer },
+            { Py_bf_releasebuffer, (void *) nb_ndarray_releasebuffer },
+#endif
+            { 0, nullptr }
+        };
+
+        PyType_Spec spec = {
+            /* .name = */ "nanobind.nb_ndarray",
+            /* .basicsize = */ (int) sizeof(nb_ndarray),
+            /* .itemsize = */ 0,
+            /* .flags = */ Py_TPFLAGS_DEFAULT,
+            /* .slots = */ slots
+        };
+
+        tp = (PyTypeObject *) PyType_FromSpec(&spec);
+        check(tp, "nb_ndarray type creation failed!");
+
+#if PY_VERSION_HEX < 0x03090000
+        tp->tp_as_buffer->bf_getbuffer = nd_ndarray_tpbuffer;
+        tp->tp_as_buffer->bf_releasebuffer = nb_ndarray_releasebuffer;
+#endif
+
+        internals->nb_ndarray = tp;
+    }
+
+    return tp;
+}
+
+static PyObject *dlpack_from_buffer_protocol(PyObject *o, bool ro) {
     scoped_pymalloc<Py_buffer> view;
     scoped_pymalloc<managed_dltensor> mt;
 
-    if (PyObject_GetBuffer(o, view.get(), PyBUF_RECORDS)) {
+    if (PyObject_GetBuffer(o, view.get(),
+                           ro ? PyBUF_RECORDS_RO : PyBUF_RECORDS)) {
         PyErr_Clear();
         return nullptr;
     }
@@ -211,8 +244,8 @@ static PyObject *dlpack_from_buffer_protocol(PyObject *o) {
     mt->dltensor.dtype = dt;
     mt->dltensor.byte_offset = value_int - value_rounded;
 
-    scoped_pymalloc<int64_t> strides(view->ndim);
-    scoped_pymalloc<int64_t> shape(view->ndim);
+    scoped_pymalloc<int64_t> strides((size_t) view->ndim);
+    scoped_pymalloc<int64_t> shape((size_t) view->ndim);
     for (size_t i = 0; i < (size_t) view->ndim; ++i) {
         strides[i] = (int64_t) (view->strides[i] / view->itemsize);
         shape[i] = (int64_t) view->shape[i];
@@ -235,12 +268,37 @@ static PyObject *dlpack_from_buffer_protocol(PyObject *o) {
     });
 }
 
+bool ndarray_check(PyObject *o) noexcept {
+    PyTypeObject *tp = Py_TYPE(o);
+
+    PyObject *name = nb_type_name((PyObject *) tp);
+    check(name, "Could not obtain type name! (1)");
+
+    const char *tp_name = PyUnicode_AsUTF8AndSize(name, nullptr);
+    check(tp_name, "Could not obtain type name! (2)");
+
+    bool result =
+        // NumPy
+        strcmp(tp_name, "ndarray") == 0 ||
+        // PyTorch
+        strcmp(tp_name, "torch.Tensor") == 0 ||
+        // XLA
+        strcmp(tp_name, "jaxlib.xla_extension.ArrayImpl") == 0 ||
+        // Tensorflow
+        strcmp(tp_name, "tensorflow.python.framework.ops.EagerTensor") == 0;
+
+    Py_DECREF(name);
+    return result;
+}
+
+
 ndarray_handle *ndarray_import(PyObject *o, const ndarray_req *req,
-                             bool convert) noexcept {
+                               bool convert) noexcept {
     object capsule;
+    bool is_pycapsule = PyCapsule_CheckExact(o);
 
     // If this is not a capsule, try calling o.__dlpack__()
-    if (!PyCapsule_CheckExact(o)) {
+    if (!is_pycapsule) {
         capsule = steal(PyObject_CallMethod(o, "__dlpack__", nullptr));
 
         if (!capsule.is_valid()) {
@@ -268,7 +326,7 @@ ndarray_handle *ndarray_import(PyObject *o, const ndarray_req *req,
 
         // Try creating a ndarray via the buffer protocol
         if (!capsule.is_valid())
-            capsule = steal(dlpack_from_buffer_protocol(o));
+            capsule = steal(dlpack_from_buffer_protocol(o, req->req_ro));
 
         if (!capsule.is_valid())
             return nullptr;
@@ -313,12 +371,12 @@ ndarray_handle *ndarray_import(PyObject *o, const ndarray_req *req,
     for (uint32_t i = 0; i < req->ndim; ++i)
         size *= t.shape[i];
 
-    scoped_pymalloc<int64_t> strides(t.ndim);
+    scoped_pymalloc<int64_t> strides((size_t) t.ndim);
     if ((req->req_order || !t.strides) && t.ndim > 0) {
-        size_t accum = 1;
+        int64_t accum = 1;
 
         if (req->req_order == 'C' || !t.strides) {
-            for (uint32_t i = (uint32_t) (t.ndim - 1);;) {
+            for (size_t i = (size_t) (t.ndim - 1);;) {
                 strides[i] = accum;
                 accum *= t.shape[i];
                 if (i == 0)
@@ -326,7 +384,7 @@ ndarray_handle *ndarray_import(PyObject *o, const ndarray_req *req,
                 --i;
             }
         } else if (req->req_order == 'F') {
-            for (uint32_t i = 0; i < (uint32_t) t.ndim; ++i) {
+            for (size_t i = 0; i < (size_t) t.ndim; ++i) {
                 strides[i] = accum;
                 accum *= t.shape[i];
             }
@@ -340,7 +398,7 @@ ndarray_handle *ndarray_import(PyObject *o, const ndarray_req *req,
                    field, which implies a C-style ordering. */
                 pass_order = req->req_order == 'C';
             } else {
-                for (uint32_t i = 0; i < (uint32_t) t.ndim; ++i) {
+                for (size_t i = 0; i < (size_t) t.ndim; ++i) {
                     if (t.shape[i] != 1 && strides[i] != t.strides[i]) {
                         pass_order = false;
                         break;
@@ -357,26 +415,27 @@ ndarray_handle *ndarray_import(PyObject *o, const ndarray_req *req,
         str module_name_o = borrow<str>(handle(tp).attr("__module__"));
         const char *module_name = module_name_o.c_str();
 
-        char order = 'K';
+        char order = 'K'; // for NumPy. 'K' means 'keep'
         if (req->req_order != '\0')
             order = req->req_order;
 
-        if (req->dtype.lanes != 1)
+        dlpack::dtype dt = req->req_dtype ? req->dtype : t.dtype;
+        if (dt.lanes != 1)
             return nullptr;
 
         const char *prefix = nullptr;
         char dtype[9];
-        if (req->dtype.code == (uint8_t) dlpack::dtype_code::Bool) {
+        if (dt.code == (uint8_t) dlpack::dtype_code::Bool) {
             std::strcpy(dtype, "bool");
         } else {
-            switch (req->dtype.code) {
+            switch (dt.code) {
                 case (uint8_t) dlpack::dtype_code::Int: prefix = "int"; break;
                 case (uint8_t) dlpack::dtype_code::UInt: prefix = "uint"; break;
                 case (uint8_t) dlpack::dtype_code::Float: prefix = "float"; break;
                 default:
                     return nullptr;
             }
-            snprintf(dtype, sizeof(dtype), "%s%u", prefix, req->dtype.bits);
+            snprintf(dtype, sizeof(dtype), "%s%u", prefix, dt.bits);
         }
 
         object converted;
@@ -385,9 +444,9 @@ ndarray_handle *ndarray_import(PyObject *o, const ndarray_req *req,
                 converted = handle(o).attr("astype")(dtype, order);
             } else if (strcmp(module_name, "torch") == 0) {
                 converted = handle(o).attr("to")(
-                    arg("dtype") = module_::import_("torch").attr(dtype),
-                    arg("copy") = true
-                );
+                    arg("dtype") = module_::import_("torch").attr(dtype));
+                if (req->req_order == 'C')
+                    converted = converted.attr("contiguous")();
             } else if (strncmp(module_name, "tensorflow.", 11) == 0) {
                 converted = module_::import_("tensorflow")
                                 .attr("cast")(handle(o), dtype);
@@ -413,6 +472,13 @@ ndarray_handle *ndarray_import(PyObject *o, const ndarray_req *req,
     result->owner = nullptr;
     result->free_shape = false;
     result->call_deleter = true;
+    result->ro = req->req_ro;
+    if (is_pycapsule) {
+        result->self = nullptr;
+    } else {
+        result->self = o;
+        Py_INCREF(o);
+    }
 
     // Ensure that the strides member is always initialized
     if (t.strides) {
@@ -425,8 +491,8 @@ ndarray_handle *ndarray_import(PyObject *o, const ndarray_req *req,
     // Mark the dltensor capsule as "consumed"
     if (PyCapsule_SetName(capsule.ptr(), "used_dltensor") ||
         PyCapsule_SetDestructor(capsule.ptr(), nullptr))
-        fail("nanobind::detail::ndarray_import(): could not mark dltensor "
-             "capsule as consumed!");
+        check(false, "nanobind::detail::ndarray_import(): could not mark "
+                     "dltensor capsule as consumed!");
 
     return result.release();
 }
@@ -444,9 +510,10 @@ void ndarray_dec_ref(ndarray_handle *th) noexcept {
     size_t rc_value = th->refcount--;
 
     if (rc_value == 0) {
-        fail("ndarray_dec_ref(): reference count became negative!");
+        check(false, "ndarray_dec_ref(): reference count became negative!");
     } else if (rc_value == 1) {
         Py_XDECREF(th->owner);
+        Py_XDECREF(th->self);
         managed_dltensor *mt = th->ndarray;
         if (th->free_shape) {
             PyMem_Free(mt->dltensor.shape);
@@ -467,9 +534,9 @@ void ndarray_dec_ref(ndarray_handle *th) noexcept {
 }
 
 ndarray_handle *ndarray_create(void *value, size_t ndim, const size_t *shape_in,
-                            PyObject *owner, const int64_t *strides_in,
-                            dlpack::dtype *dtype, int32_t device_type,
-                            int32_t device_id) {
+                               PyObject *owner, const int64_t *strides_in,
+                               dlpack::dtype *dtype, bool ro,
+                               int32_t device_type, int32_t device_id) {
     /* DLPack mandates 256-byte alignment of the 'DLTensor::data' field, but
        PyTorch unfortunately ignores the 'byte_offset' value.. :-( */
 #if 0
@@ -479,7 +546,6 @@ ndarray_handle *ndarray_create(void *value, size_t ndim, const size_t *shape_in,
     uintptr_t value_int = (uintptr_t) value,
               value_rounded = value_int;
 #endif
-
 
     scoped_pymalloc<managed_dltensor> ndarray;
     scoped_pymalloc<ndarray_handle> result;
@@ -521,9 +587,11 @@ ndarray_handle *ndarray_create(void *value, size_t ndim, const size_t *shape_in,
     result->ndarray = (managed_dltensor *) ndarray.release();
     result->refcount = 0;
     result->owner = owner;
+    result->self = nullptr;
     result->free_shape = true;
     result->free_strides = true;
     result->call_deleter = false;
+    result->ro = ro;
     Py_XINCREF(owner);
     return result.release();
 }
@@ -539,20 +607,60 @@ static void ndarray_capsule_destructor(PyObject *o) {
         PyErr_Clear();
 }
 
-PyObject *ndarray_wrap(ndarray_handle *th, int framework, rv_policy policy) noexcept {
+PyObject *ndarray_wrap(ndarray_handle *th, int framework,
+                       rv_policy policy, cleanup_list *cleanup) noexcept {
     if (!th)
         return none().release().ptr();
 
-    bool copy = policy == rv_policy::copy || policy == rv_policy::move;
+    bool copy;
+    switch (policy) {
+        case rv_policy::reference_internal:
+            if (cleanup && cleanup->self() != th->owner) {
+                if (th->owner) {
+                    PyErr_SetString(PyExc_RuntimeError,
+                                    "nanobind::detail::ndarray_wrap(): "
+                                    "reference_internal policy cannot be "
+                                    "applied (ndarray already has an owner)");
+                    return nullptr;
+                } else {
+                    th->owner = cleanup->self();
+                    Py_INCREF(th->owner);
+                }
+            }
+            [[fallthrough]];
+
+        case rv_policy::automatic:
+            copy = th->owner == nullptr && th->self == nullptr;
+            break;
+
+        case rv_policy::copy:
+        case rv_policy::move:
+            copy = true;
+            break;
+
+        default:
+            copy = false;
+            break;
+    }
+
+    if (!copy) {
+        if (th->self) {
+            Py_INCREF(th->self);
+            return th->self;
+        } else if (policy == rv_policy::none) {
+            return nullptr;
+        }
+    }
 
     if ((ndarray_framework) framework == ndarray_framework::numpy) {
         try {
-            object o = steal(PyType_GenericAlloc(internals_get().nb_ndarray, 0));
-            if (!o.is_valid())
+            nb_ndarray *h = PyObject_New(nb_ndarray, nd_ndarray_tp());
+            if (!h)
                 return nullptr;
-            ((nb_ndarray *) o.ptr())->th = th;
+            h->th = th;
             ndarray_inc_ref(th);
 
+            object o = steal((PyObject *) h);
             return module_::import_("numpy")
                 .attr("array")(o, arg("copy") = copy)
                 .release()
@@ -586,8 +694,8 @@ PyObject *ndarray_wrap(ndarray_handle *th, int framework, rv_policy policy) noex
 
 
             default:
-                fail("nanobind::detail::ndarray_wrap(): unknown framework "
-                     "specified!");
+                check(false, "nanobind::detail::ndarray_wrap(): unknown "
+                             "framework specified!");
         }
     } catch (const std::exception &e) {
         PyErr_Format(PyExc_RuntimeError,
@@ -596,10 +704,15 @@ PyObject *ndarray_wrap(ndarray_handle *th, int framework, rv_policy policy) noex
         return nullptr;
     }
 
-    object o = steal(PyCapsule_New(th->ndarray, "dltensor",
-                                   ndarray_capsule_destructor));
+    object o;
+    if (copy && (ndarray_framework) framework == ndarray_framework::none && th->self) {
+        o = borrow(th->self);
+    } else {
+        o = steal(PyCapsule_New(th->ndarray, "dltensor",
+                                       ndarray_capsule_destructor));
+        ndarray_inc_ref(th);
+    }
 
-       ndarray_inc_ref(th);
 
     if (package.is_valid()) {
         try {

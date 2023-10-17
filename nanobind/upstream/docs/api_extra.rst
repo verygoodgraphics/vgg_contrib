@@ -22,9 +22,9 @@ notation to bind operators to python. See the :ref:`operator overloading
    This is an internal class that should be accessed through the singleton
    :cpp:var:`self` value.
 
-   It supports the overloaded operators listed below. Depending on whether or
-   not :cpp:var:`self` is the left or right argument of a binary operation, the
-   binding will map to different Python methods as shown below.
+   It supports the overloaded operators listed below. Depending on whether
+   :cpp:var:`self` is the left or right argument of a binary operation,
+   the binding will map to different Python methods as shown below.
 
    .. list-table::
       :header-rows: 1
@@ -243,6 +243,9 @@ include directive:
    not comparable or copy-assignable, some of these functions will not be
    generated.
 
+   The binding operation is a no-op if the vector type has already been
+   registered with nanobind.
+
 .. _map_bindings:
 
 STL map bindings
@@ -307,6 +310,9 @@ nanobind API and require an additional include directive:
         - Returns an iterable view of the map's values
       * - ``items(self, arg: Map) -> Map.ItemView``
         - Returns an iterable view of the map's items
+
+   The binding operation is a no-op if the map type has already been
+   registered with nanobind.
 
 Unique pointer deleter
 ----------------------
@@ -411,14 +417,31 @@ include directive:
 
    #include <nanobind/ndarray.h>
 
-Detailed documentation including example code is provided
-in a :ref:`separate section <ndarrays>`.
+Detailed documentation including example code is provided in a :ref:`separate
+section <ndarrays>`.
+
+.. cpp:function:: bool ndarray_check(handle h) noexcept
+
+   Test whether the Python object represents an ndarray. Currently, the
+   function considers NumPy, PyTorch, TensorFlow, and XLA arrays.
 
 .. cpp:class:: template <typename... Args> ndarray
 
    .. cpp:function:: ndarray() = default
 
       Create an invalid array.
+
+   .. cpp:function:: template <typename... Args2> explicit ndarray(const ndarray<Args2...> &other)
+
+      Reinterpreting constructor that wraps an existing nd-array (parameterized
+      by `Args`) into a new ndarray (parameterized by `Args2`).   No copy or
+      conversion is made.
+
+      Dropping parameters is always safe. For example, a function that
+      returns different array types could call it to convert ``ndarray<T>`` to
+      ``ndarray<>``.  When adding constraints, the constructor is only safe to
+      use following a runtime check to ensure that newly created array actually
+      possesses the advertised properties.
 
    .. cpp:function:: ndarray(const ndarray &)
 
@@ -447,7 +470,9 @@ in a :ref:`separate section <ndarrays>`.
       Create an array wrapping an existing memory allocation. The following
       parameters can be specified:
 
-      - `value`: pointer address of the memory region.
+      - `value`: pointer address of the memory region. When the ndarray is
+        parameterized by a constant scalar type to indicate read-only access, a
+        const pointer must be passed instead.
 
       - `ndim`: the number of dimensions.
 
@@ -465,6 +490,13 @@ in a :ref:`separate section <ndarrays>`.
       - The `device_type` and `device_id` indicate the device and address
         space associated with the pointer `value`.
 
+   .. cpp:function:: ndarray(void * value, const std::initializer_list<size_t> shape, handle owner = nanobind::handle(), std::initializer_list<int64_t> strides = { }, dlpack::dtype dtype = nanobind::dtype<Scalar>(), int32_t device_type = device::cpu::value, int32_t device_id = 0)
+
+      Alternative form of the above constructor, which accepts the ``shape``
+      and ``strides`` arguments using a ``std::initializer_list``. It
+      automatically infers the value of ``ndim`` based on the size of
+      ``shape``.
+
    .. cpp:function:: dlpack::dtype dtype() const
 
       Return the data type underlying the array
@@ -477,6 +509,17 @@ in a :ref:`separate section <ndarrays>`.
 
       Return the size of the array (i.e. the product of all dimensions).
 
+   .. cpp:function:: size_t itemsize() const
+
+      Return the size of a single array element in bytes. The returned value
+      is rounded to the next full byte in case of bit-level representations
+      (query :cpp:member:`dtype::bits` for bit-level granularity).
+
+   .. cpp:function:: size_t nbytes() const
+
+      Return the size of the entire array bytes. The returned value is rounded
+      to the next full byte in case of bit-level representations.
+
    .. cpp:function:: size_t shape(size_t i) const
 
       Return the size of dimension `i`.
@@ -485,16 +528,16 @@ in a :ref:`separate section <ndarrays>`.
 
       Return the stride of dimension `i`.
 
-   .. cpp:function:: int64_t* shape_ptr() const
+   .. cpp:function:: const int64_t* shape_ptr() const
 
       Return a pointer to the shape array. Note that the return type is
-      ``int64_t*``, which may be unexpected as the scalar version
+      ``const int64_t*``, which may be unexpected as the scalar version
       :cpp:func:`shape()` casts its result to a ``size_t``.
 
       This is a consequence of the DLPack tensor representation that uses
       signed 64-bit integers for all of these fields.
 
-   .. cpp:function:: int64_t* stride_ptr() const
+   .. cpp:function:: const int64_t* stride_ptr() const
 
       Return pointer to the stride array.
 
@@ -515,24 +558,42 @@ in a :ref:`separate section <ndarrays>`.
 
    .. cpp:function:: const Scalar * data() const
 
-      Return a mutable pointer to the array data.
+      Return a const pointer to the array data.
 
    .. cpp:function:: Scalar * data()
 
-      Return a const pointer to the array data.
+      Return a mutable pointer to the array data. Only enabled when `Scalar` is
+      not itself ``const``.
+
+   .. cpp:function:: template <typename... Extra> auto view()
+
+      Returns an nd-array view that is optimized for fast array access on the
+      CPU. You may optionally specify additional ndarray constraints via the
+      `Extra` parameter (though a runtime check should first be performed to
+      ensure that the array possesses these properties).
+
+      The returned view provides the operations ``data()``, ``ndim()``,
+      ``shape()``, ``stride()``, and ``operator()`` following the conventions
+      of the `ndarray` type.
 
    .. cpp:function:: template <typename... Ts> auto& operator()(Ts... indices)
 
       Return a mutable reference to the element at stored at the provided
       index/indices. ``sizeof(Ts)`` must match :cpp:func:`ndim()`.
 
+      This accessor is only available when the scalar type and array dimension
+      were specified as template parameters.
+
 Data types
 ^^^^^^^^^^
 
 Nanobind uses the `DLPack <https://github.com/dmlc/dlpack>`_ ABI to represent
 metadata describing n-dimensional arrays (even when they are exchanged using
-the buffer protocol). Relevant data structures are located in the
-``nanobind::dlpack`` sub-namespace.
+the buffer protocol). Consequently, the set of possible dtypes is :ref:`more
+restricted <dtype_restrictions>` than that of other nd-array libraries (e.g.,
+NumPy). Relevant data structures are located in the ``nanobind::dlpack``
+sub-namespace.
+
 
 .. cpp:enum-class:: dlpack::dtype_code : uint8_t
 
@@ -590,15 +651,46 @@ The :cpp:class:`ndarray\<..\> <ndarray>` class admits optional template
 parameters. They constrain the type of array arguments that may be passed to a
 function.
 
+The following are supported:
+
+Data type
++++++++++
+
+The data type of the underlying scalar element. The following are supported.
+
+- ``[u]int8_t`` up to ``[u]int64_t`` and other variations (``unsigned long long``, etc.)
+- ``float``, ``double``
+- ``bool``
+
+Annotate the data type with ``const`` to indicate a read-only array. Note that
+only the buffer protocol/NumPy interface considers ``const``-ness at the
+moment; data exchange with other array libraries will ignore this annotation.
+
+When the is unspecified (e.g., to accept arbitrary input arrays), the
+:cpp:class:`ro` annotation can instead be used to denote read-only access:
+
+.. cpp:class:: ro
+
+   Indicate read-only access (use only when no data type is specified.)
+
+
+nanobind does not support non-standard types as documented in the section on
+:ref:`dtype limitations <dtype_restrictions>`.
+
 Shape
 +++++
 
-.. cpp:class:: template<size_t... Is> shape
+.. cpp:class:: template <size_t... Is> shape
 
    Require the array to have ``sizeof...(Is)`` dimensions. Each entry of `Is`
    specifies a fixed size constraint for that specific dimension. An entry
    equal to :cpp:var:`any` indicates that any size should be accepted for this
    dimension.
+
+.. cpp:class:: template <size_t N> ndim
+
+   Alternative to the above that only constrains the array dimension.
+   ``nb::ndim<2>`` is equivalent to ``nb::shape<nb::any, nb::any>``.
 
 .. cpp:var:: constexpr size_t any = (size_t) -1
 
@@ -700,3 +792,396 @@ The following helper type aliases require an additional include directive:
 
    This templated type alias creates an ``Eigen::Map<..>`` with flexible strides for
    zero-copy data exchange between Eigen and NumPy.
+
+.. _chrono_conversions:
+
+Timestamp and duration conversions
+----------------------------------
+
+nanobind supports bidirectional conversions of timestamps and
+durations between their standard representations in Python
+(:py:class:`datetime.datetime`, :py:class:`datetime.timedelta`) and in C++
+(``std::chrono::time_point``, ``std::chrono::duration``).
+A few unidirectional conversions from other Python types to these
+C++ types are also provided and explained below.
+
+These type casters require an additional include directive:
+
+.. code-block:: cpp
+
+   #include <nanobind/stl/chrono.h>
+
+.. The rest of this section is adapted from pybind11/docs/advanced/cast/chrono.rst
+
+An overview of clocks in C++11
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The C++11 standard defines three different clocks, and users can
+define their own. Each ``std::chrono::time_point`` is defined relative
+to a particular clock. When using the ``chrono`` type caster, you must be
+aware that only ``std::chrono::system_clock`` is guaranteed to convert
+to a Python :py:class:`~datetime.datetime` object; other clocks may convert to
+:py:class:`~datetime.timedelta` if they don't represent calendar time.
+
+The first clock defined by the standard is ``std::chrono::system_clock``.
+This clock measures the current date and time, much like the Python
+:py:func:`time.time` function. It can change abruptly due to
+administrative actions, daylight savings time transitions, or
+synchronization with an external time server. That makes this clock a
+poor choice for timing purposes, but a good choice for wall-clock time.
+
+The second clock defined by the standard is ``std::chrono::steady_clock``.
+This clock ticks at a steady rate and is never adjusted, like
+:py:func:`time.monotonic` in Python. That makes it excellent for timing
+purposes, but the value in this clock does not correspond to the
+current date and time. Often this clock will measure the amount of
+time your system has been powered on. This clock will never be
+the same clock as the system clock, because the system clock can
+change but steady clocks cannot.
+
+The third clock defined in the standard is ``std::chrono::high_resolution_clock``.
+This clock is the clock that has the highest resolution out of all the
+clocks in the system. It is normally an alias for either ``system_clock``
+or ``steady_clock``, but can be its own independent clock. Due
+to this uncertainty, conversions of time measured on the
+``high_resolution_clock`` to Python produce platform-dependent types:
+you'll get a :py:class:`~datetime.datetime` if ``high_resolution_clock`` is
+an alias for ``system_clock`` on your system, or a :py:class:`~datetime.timedelta`
+value otherwise.
+
+Provided conversions
+^^^^^^^^^^^^^^^^^^^^
+
+The C++ types described in this section may be instantiated with any
+precision. Conversions to a less-precise type will round towards zero.
+Since Python's built-in date and time objects support only microsecond
+precision, any precision beyond that on the C++ side will be lost when
+converting to Python.
+
+.. rubric:: C++ to Python
+
+- ``std::chrono::system_clock::time_point`` → :py:class:`datetime.datetime`
+    A system clock time will be converted to a Python
+    :py:class:`~datetime.datetime` instance.  The result describes a time in the
+    local timezone, but does not have any timezone information
+    attached to it (it is a naive datetime object).
+
+- ``std::chrono::duration`` → :py:class:`datetime.timedelta`
+    A duration will be converted to a Python :py:class:`~datetime.timedelta`.
+    Any precision beyond microseconds is lost by rounding towards zero.
+
+- ``std::chrono::[other_clock]::time_point`` → :py:class:`datetime.timedelta`
+    A time on any clock except the system clock will be converted to a Python
+    :py:class:`~datetime.timedelta`, which measures the number of seconds between
+    the clock's epoch and the time point of interest.
+
+.. rubric:: Python to C++
+
+- :py:class:`datetime.datetime` or :py:class:`datetime.date` or :py:class:`datetime.time` → ``std::chrono::system_clock::time_point``
+    A Python date, time, or datetime object can be converted into a
+    system clock timepoint.  A :py:class:`~datetime.time` with no date
+    information is treated as that time on January 1, 1970. A
+    :py:class:`~datetime.date` with no time information is treated as midnight
+    on that date. **Any timezone information is ignored.**
+
+- :py:class:`datetime.timedelta` → ``std::chrono::duration``
+    A Python time delta object can be converted into a duration
+    that describes the same number of seconds (modulo precision limitations).
+
+- :py:class:`datetime.timedelta` → ``std::chrono::[other_clock]::time_point``
+    A Python time delta object can be converted into a timepoint on a
+    clock other than the system clock. The resulting timepoint will be
+    that many seconds after the target clock's epoch time.
+
+- ``float`` → ``std::chrono::duration``
+    A floating-point value can be converted into a duration. The input is
+    treated as a number of seconds, and fractional seconds are supported
+    to the extent representable.
+
+- ``float`` → ``std::chrono::[other_clock]::time_point``
+    A floating-point value can be converted into a timepoint on a
+    clock other than the system clock. The input is treated as a
+    number of seconds, and fractional seconds are supported to the
+    extent representable. The resulting timepoint will be that many
+    seconds after the target clock's epoch time.
+
+
+Evaluating Python expressions from strings
+------------------------------------------
+
+The following functions can be used to evaluate Python functions and
+expressions. They require an additional include directive:
+
+.. code-block:: cpp
+
+   #include <nanobind/eval.h>
+
+Detailed documentation including example code is provided in a :ref:`separate
+section <utilities_eval>`.
+
+.. cpp:enum-class:: eval_mode
+
+   This enumeration specifies how the content of a string should be
+   interpreted. Used in Py_CompileString().
+
+   .. cpp:enumerator:: eval_expr = Py_eval_input
+
+      Evaluate a string containing an isolated expression
+
+   .. cpp:enumerator:: eval_single_statement = Py_single_input
+
+      Evaluate a string containing a single statement. Returns \c None
+
+   .. cpp:enumerator:: eval_statements = Py_file_input
+
+      Evaluate a string containing a sequence of statement. Returns \c None
+
+.. cpp:function:: template <eval_mode start = eval_expr, size_t N> object eval(const char (&s)[N], handle global = handle(), handle local = handle())
+
+   Evaluate the given Python code in the given global/local scopes, and return
+   the value.
+
+.. cpp:function:: inline void exec(const str &expr, handle global = handle(), handle local = handle())
+
+   Execute the given Python code in the given global/local scopes.
+
+Intrusive reference counting helpers
+------------------------------------
+
+The following functions and classes can be used to augment user-provided
+classes with intrusive reference counting that greatly simplifies shared
+ownership in larger C++/Python binding projects.
+
+This functionality requires the following include directives:
+
+.. code-block:: cpp
+
+   #include <nanobind/intrusive/counter.h>
+   #include <nanobind/intrusive/ref.h>
+
+These headers reference several functions, whose implementation must be
+provided. You can do so by including the following file from a single ``.cpp``
+file of your project:
+
+.. code-block:: cpp
+
+   #include <nanobind/intrusive/counter.inl>
+
+The functionality in these files consist of the following classes and
+functions:
+
+.. cpp:class:: intrusive_counter
+
+   Simple atomic reference counter that can optionally switch over to
+   Python-based reference counting.
+
+   The various copy/move assignment/constructors intentionally don't transfer
+   the reference count. This is so that the contents of classes containing an
+   ``intrusive_counter`` can be copied/moved without disturbing the reference
+   counts of the associated instances.
+
+   .. cpp:function:: intrusive_counter() noexcept = default
+
+      Initialize with a reference count of zero.
+
+   .. cpp:function:: intrusive_counter(const intrusive_counter &o)
+
+      Copy constructor, which produces a zero-initialized counter.
+      Does *not* copy the reference count from `o`.
+
+   .. cpp:function:: intrusive_counter(intrusive_counter &&o)
+
+      Move constructor, which produces a zero-initialized counter.
+      Does *not* copy the reference count from `o`.
+
+   .. cpp:function:: intrusive_counter &operator=(const intrusive_counter &o)
+
+      Copy assignment operator. Does *not* copy the reference count from `o`.
+
+   .. cpp:function:: intrusive_counter &operator=(intrusive_counter &&o)
+
+      Move assignment operator. Does *not* copy the reference count from `o`.
+
+   .. cpp:function:: void inc_ref() const noexcept
+
+      Increase the reference count. When the counter references an object
+      managed by Python, the operation calls ``Py_INCREF()`` to increase
+      the reference count of the Python object instead.
+
+      The :cpp:func:`inc_ref() <nanobind::inc_ref>` top-level function
+      encapsulates this logic for subclasses of :cpp:class:`intrusive_base`.
+
+   .. cpp:function:: bool dec_ref() const noexcept
+
+      Decrease the reference count. When the counter references an object
+      managed by Python, the operation calls ``Py_DECREF()`` to decrease
+      the reference count of the Python object instead.
+
+      When the C++-managed reference count reaches zero, the operation returns
+      ``true`` to signal to the caller that it should use a *delete expression*
+      to destroy the instance.
+
+      The :cpp:func:`dec_ref() <nanobind::dec_ref>` top-level function
+      encapsulates this logic for subclasses of :cpp:class:`intrusive_base`.
+
+   .. cpp:function:: void set_self_py(PyObject * self)
+
+      Set the Python object associated with this instance. This operation
+      is usually called by nanobind when ownership is transferred to the
+      Python side.
+
+      Any references from prior calls to
+      :cpp:func:`intrusive_counter::inc_ref()` are converted into Python
+      references by calling ``Py_INCREF()`` repeatedly.
+
+   .. cpp:function:: PyObject * self_py()
+
+      Return the Python object associated with this instance (or ``nullptr``).
+
+.. cpp:class:: intrusive_base
+
+   Simple polymorphic base class for a intrusively reference-counted object
+   hierarchy. The member functions expose corresponding functionality of
+   :cpp:class:`intrusive_counter`.
+
+   .. cpp:function:: void inc_ref() const noexcept
+
+      See :cpp:func:`intrusive_counter::inc_ref()`.
+
+   .. cpp:function:: bool dec_ref() const noexcept
+
+      See :cpp:func:`intrusive_counter::dec_ref()`.
+
+   .. cpp:function:: void set_self_py(PyObject * self)
+
+      See :cpp:func:`intrusive_counter::set_self_py()`.
+
+   .. cpp:function:: PyObject * self_py()
+
+      See :cpp:func:`intrusive_counter::self_py()`.
+
+.. cpp:function:: void intrusive_init(void (* intrusive_inc_ref_py)(PyObject * ) noexcept, void (* intrusive_dec_ref_py)(PyObject * ) noexcept)
+
+   Function to register reference counting hooks with the intrusive reference
+   counter class. This allows its implementation to not depend on Python.
+
+   You would usually call this function as follows from the initialization
+   routine of a Python extension:
+
+   .. code-block:: cpp
+
+      NB_MODULE(my_ext, m) {
+          nb::intrusive_init(
+              [](PyObject * o) noexcept {
+                  nb::gil_scoped_acquire guard;
+                  Py_INCREF(o);
+              },
+              [](PyObject * o) noexcept {
+                  nb::gil_scoped_acquire guard;
+                  Py_DECREF(o);
+              });
+
+          // ...
+      }
+
+.. cpp:function:: inline void inc_ref(intrusive_base * o) noexcept
+
+   Reference counting helper function that calls ``o->inc_ref()`` if ``o`` is
+   not equal to ``nullptr``.
+
+.. cpp:function:: inline void dec_ref(intrusive_base * o) noexcept
+
+   Reference counting helper function that calls ``o->dec_ref()`` if ``o`` is
+   not equal to ``nullptr`` and ``delete o`` when the reference count reaches
+   zero.
+
+.. cpp:class:: template <typename T> ref
+
+   RAII scoped reference counting helper class
+
+   :cpp:class:`ref\<T\> <ref>` is a simple RAII wrapper class that encapsulates a
+   pointer to an instance with intrusive reference counting.
+
+   It takes care of increasing and decreasing the reference count as needed and
+   deleting the instance when the count reaches zero.
+
+   For this to work, compatible functions :cpp:func:`inc_ref()` and
+   :cpp:func:`dec_ref()` must be defined before including the file
+   ``nanobind/intrusive/ref.h``. Default implementations for subclasses of the
+   type :cpp:class:`intrusive_base` are already provided as part of the file
+   ``counter.h``.
+
+   .. cpp:function:: ref() = default
+
+      Create a null reference
+
+   .. cpp:function:: ref(T * ptr)
+
+      Create a reference from a pointer. Increases the reference count of the
+      object (if not ``nullptr``).
+
+   .. cpp:function:: ref(const ref &r)
+
+      Copy a reference. Increase the reference count of the object (if not
+      ``nullptr``).
+
+   .. cpp:function:: ref(ref &&r) noexcept
+
+      Move a reference. Object reference counts are unaffected by this operation.
+
+   .. cpp:function:: ~ref()
+
+      Destroy a reference. Decreases the reference count of the object (if not
+      ``nullptr``).
+
+   .. cpp:function:: ref& operator=(ref &&r) noexcept
+
+      Move-assign another reference into this one.
+
+   .. cpp:function:: ref& operator=(const ref &r)
+
+      Copy-assign another reference into this one.
+
+   .. cpp:function:: ref& operator=(const T * ptr)
+
+      Overwrite this reference with a pointer to another object
+
+   .. cpp:function:: bool operator==(const ref &r) const
+
+      Compare this reference with another reference (pointer equality)
+
+   .. cpp:function:: bool operator!=(const ref &r) const
+
+      Compare this reference with another reference (pointer inequality)
+
+   .. cpp:function:: bool operator==(const T * ptr) const
+
+      Compare this reference with another object (pointer equality)
+
+   .. cpp:function:: bool operator!=(const T * ptr) const
+
+      Compare this reference with another object (pointer inequality)
+
+   .. cpp:function:: T * operator->()
+
+      Access the object referenced by this reference
+
+   .. cpp:function:: const T * operator->() const
+
+      Access the object referenced by this reference (const version)
+
+   .. cpp:function:: T& operator*()
+
+      Return a C++ reference to the referenced object
+
+   .. cpp:function:: const T& operator*() const
+
+      Return a C++ reference to the referenced object (const version)
+
+   .. cpp:function:: T* get()
+
+      Return a C++ pointer to the referenced object
+
+   .. cpp:function:: const T* get() const
+
+      Return a C++ pointer to the referenced object (const version)

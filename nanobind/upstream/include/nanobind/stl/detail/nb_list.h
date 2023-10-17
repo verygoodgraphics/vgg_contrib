@@ -44,7 +44,7 @@ template <typename Value_, typename Entry> struct list_caster {
                 break;
             }
 
-            value.push_back(((Caster &&) caster).operator cast_t<Entry &&>());
+            value.push_back(caster.operator cast_t<Entry>());
         }
 
         Py_XDECREF(temp);
@@ -59,7 +59,7 @@ template <typename Value_, typename Entry> struct list_caster {
         if (ret.is_valid()) {
             Py_ssize_t index = 0;
 
-            for (auto &value : src) {
+            for (auto &&value : src) {
                 handle h = Caster::from_cpp(forward_like<T>(value), policy, cleanup);
 
                 if (!h.is_valid()) {

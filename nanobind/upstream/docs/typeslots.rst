@@ -19,9 +19,9 @@ annotation when creating the type.
    nb::class_<MyClass>(m, "MyClass", nb::type_slots(slots));
 
 Here, ``slots`` should refer to an array of function pointers that are tagged
-with a corresponding slot identifier. For example, here is a example
+with a corresponding slot identifier. For example, here is an example
 function that overrides the addition operator so that it behaves like a
-multiplication. 
+multiplication.
 
 .. code-block:: cpp
 
@@ -208,7 +208,7 @@ work without changes. The ``tp_clear`` slot requires small touch-ups:
 
    int wrapper_tp_clear(PyObject *self) {
        Wrapper *w = nb::inst_ptr<Wrapper>(self);
-       w->value = std::function<void(void)>();
+       w->value = nullptr;
        return 0;
    }
 

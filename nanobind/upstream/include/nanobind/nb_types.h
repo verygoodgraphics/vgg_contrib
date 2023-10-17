@@ -139,6 +139,7 @@ public:
     NB_DECL_OP_2(operator-)
     NB_DECL_OP_2(operator*)
     NB_DECL_OP_2(operator/)
+    NB_DECL_OP_2(operator%)
     NB_DECL_OP_2(operator|)
     NB_DECL_OP_2(operator&)
     NB_DECL_OP_2(operator^)
@@ -149,6 +150,7 @@ public:
     NB_DECL_OP_2_I(operator-=)
     NB_DECL_OP_2_I(operator*=)
     NB_DECL_OP_2_I(operator/=)
+    NB_DECL_OP_2_I(operator%=)
     NB_DECL_OP_2_I(operator|=)
     NB_DECL_OP_2_I(operator&=)
     NB_DECL_OP_2_I(operator^=)
@@ -173,6 +175,8 @@ public:
     handle(handle &&) noexcept = default;
     handle &operator=(const handle &) = default;
     handle &operator=(handle &&) noexcept = default;
+    NB_INLINE handle(std::nullptr_t, detail::steal_t) : m_ptr(nullptr) { }
+    NB_INLINE handle(std::nullptr_t) : m_ptr(nullptr) { }
     NB_INLINE handle(const PyObject *ptr) : m_ptr((PyObject *) ptr) { }
     NB_INLINE handle(const PyTypeObject *ptr) : m_ptr((PyObject *) ptr) { }
 
@@ -241,6 +245,7 @@ public:
     }
 
     NB_IMPL_OP_2_IO(operator+=)
+    NB_IMPL_OP_2_IO(operator%=)
     NB_IMPL_OP_2_IO(operator-=)
     NB_IMPL_OP_2_IO(operator*=)
     NB_IMPL_OP_2_IO(operator/=)
@@ -359,6 +364,25 @@ class int_ : public object {
     }
 };
 
+class float_ : public object {
+    NB_OBJECT_DEFAULT(float_, object, "float", PyFloat_Check)
+
+    explicit float_(handle h)
+        : object(detail::float_from_obj(h.ptr()), detail::steal_t{}) { }
+
+    explicit float_(double value)
+        : object(PyFloat_FromDouble(value), detail::steal_t{}) {
+        if (!m_ptr)
+            detail::raise_python_error();
+    }
+
+#if !defined(Py_LIMITED_API)
+    explicit operator double() const { return PyFloat_AS_DOUBLE(m_ptr); }
+#else
+    explicit operator double() const { return PyFloat_AsDouble(m_ptr); }
+#endif
+};
+
 class str : public object {
     NB_OBJECT_DEFAULT(str, object, "str", PyUnicode_Check)
 
@@ -373,7 +397,7 @@ class str : public object {
 
     template <typename... Args> str format(Args&&... args);
 
-    const char *c_str() { return PyUnicode_AsUTF8AndSize(m_ptr, nullptr); }
+    const char *c_str() const { return PyUnicode_AsUTF8AndSize(m_ptr, nullptr); }
 };
 
 class bytes : public object {
@@ -388,14 +412,17 @@ class bytes : public object {
     explicit bytes(const char *s, size_t n)
         : object(detail::bytes_from_cstr_and_size(s, n), detail::steal_t{}) { }
 
-    const char *c_str() { return PyBytes_AsString(m_ptr); }
+    const char *c_str() const { return PyBytes_AsString(m_ptr); }
 
-    size_t size() const { return PyBytes_Size(m_ptr); }
+    size_t size() const { return (size_t) PyBytes_Size(m_ptr); }
 };
 
 class tuple : public object {
-    NB_OBJECT_DEFAULT(tuple, object, "tuple", PyTuple_Check)
-    size_t size() const { return NB_TUPLE_GET_SIZE(m_ptr); }
+    NB_OBJECT(tuple, object, "tuple", PyTuple_Check)
+    tuple() : object(PyTuple_New(0), detail::steal_t()) { }
+    explicit tuple(handle h)
+        : object(detail::tuple_from_obj(h.ptr()), detail::steal_t{}) { }
+    size_t size() const { return (size_t) NB_TUPLE_GET_SIZE(m_ptr); }
     template <typename T, detail::enable_if_t<std::is_arithmetic_v<T>> = 1>
     detail::accessor<detail::num_item_tuple> operator[](T key) const;
 
@@ -412,7 +439,9 @@ class type_object : public object {
 class list : public object {
     NB_OBJECT(list, object, "list", PyList_Check)
     list() : object(PyList_New(0), detail::steal_t()) { }
-    size_t size() const { return NB_LIST_GET_SIZE(m_ptr); }
+    explicit list(handle h)
+        : object(detail::list_from_obj(h.ptr()), detail::steal_t{}) { }
+    size_t size() const { return (size_t) NB_LIST_GET_SIZE(m_ptr); }
 
     template <typename T> void append(T &&value);
 
@@ -428,12 +457,27 @@ class list : public object {
 class dict : public object {
     NB_OBJECT(dict, object, "dict", PyDict_Check)
     dict() : object(PyDict_New(), detail::steal_t()) { }
-    size_t size() const { return NB_DICT_GET_SIZE(m_ptr); }
+    size_t size() const { return (size_t) NB_DICT_GET_SIZE(m_ptr); }
     detail::dict_iterator begin() const;
     detail::dict_iterator end() const;
     list keys() const { return steal<list>(detail::obj_op_1(m_ptr, PyDict_Keys)); }
     list values() const { return steal<list>(detail::obj_op_1(m_ptr, PyDict_Values)); }
     list items() const { return steal<list>(detail::obj_op_1(m_ptr, PyDict_Items)); }
+    template <typename T> bool contains(T&& key) const;
+    void clear() { PyDict_Clear(m_ptr); }
+};
+
+
+class set : public object {
+    NB_OBJECT(set, object, "set", PySet_Check)
+    set() : object(PySet_New(nullptr), detail::steal_t()) { }
+    size_t size() const { return (size_t) NB_SET_GET_SIZE(m_ptr); }
+    template <typename T> bool contains(T&& key) const;
+    template <typename T> void add(T &&value);
+    void clear() {
+        if (PySet_Clear(m_ptr))
+            detail::raise_python_error();
+    }
 };
 
 class sequence : public object {
@@ -445,6 +489,7 @@ class mapping : public object {
     list keys() const { return steal<list>(detail::obj_op_1(m_ptr, PyMapping_Keys)); }
     list values() const { return steal<list>(detail::obj_op_1(m_ptr, PyMapping_Values)); }
     list items() const { return steal<list>(detail::obj_op_1(m_ptr, PyMapping_Items)); }
+    template <typename T> bool contains(T&& key) const;
 };
 
 class args : public tuple {
@@ -506,7 +551,7 @@ template <typename T>
 NB_INLINE bool isinstance(handle h) noexcept {
     if constexpr (std::is_base_of_v<handle, T>)
         return T::check_(h);
-    else if constexpr (detail::make_caster<T>::IsClass)
+    else if constexpr (detail::is_base_caster_v<detail::make_caster<T>>)
         return detail::nb_type_isinstance(h.ptr(), &typeid(detail::intrinsic_t<T>));
     else
         return detail::make_caster<T>().from_python(h, 0, nullptr);
@@ -515,9 +560,10 @@ NB_INLINE bool isinstance(handle h) noexcept {
 NB_INLINE str repr(handle h) { return steal<str>(detail::obj_repr(h.ptr())); }
 NB_INLINE size_t len(handle h) { return detail::obj_len(h.ptr()); }
 NB_INLINE size_t len_hint(handle h) { return detail::obj_len_hint(h.ptr()); }
-NB_INLINE size_t len(const tuple &t) { return NB_TUPLE_GET_SIZE(t.ptr()); }
-NB_INLINE size_t len(const list &l) { return NB_LIST_GET_SIZE(l.ptr()); }
-NB_INLINE size_t len(const dict &d) { return NB_DICT_GET_SIZE(d.ptr()); }
+NB_INLINE size_t len(const tuple &t) { return (size_t) NB_TUPLE_GET_SIZE(t.ptr()); }
+NB_INLINE size_t len(const list &l) { return (size_t) NB_LIST_GET_SIZE(l.ptr()); }
+NB_INLINE size_t len(const dict &d) { return (size_t) NB_DICT_GET_SIZE(d.ptr()); }
+NB_INLINE size_t len(const set &d) { return (size_t) NB_SET_GET_SIZE(d.ptr()); }
 
 inline void print(handle value, handle end = handle(), handle file = handle()) {
     detail::print(value.ptr(), end.ptr(), file.ptr());
@@ -553,7 +599,7 @@ public:
     detail::tuple<Py_ssize_t, Py_ssize_t, Py_ssize_t, size_t> compute(size_t size) const {
         Py_ssize_t start, stop, step;
         size_t slice_length;
-        detail::slice_compute(m_ptr, size, start, stop, step, slice_length);
+        detail::slice_compute(m_ptr, (Py_ssize_t) size, start, stop, step, slice_length);
         return detail::tuple(start, stop, step, slice_length);
     }
 };
@@ -566,10 +612,29 @@ public:
     ellipsis() : object(Py_Ellipsis, detail::borrow_t()) {}
 };
 
+class not_implemented : public object {
+    static bool is_not_implemented(PyObject *obj) { return obj == Py_NotImplemented; }
+
+public:
+    NB_OBJECT(not_implemented, object, "NotImplementedType", is_not_implemented)
+    not_implemented() : object(Py_NotImplemented, detail::borrow_t()) {}
+};
+
 class callable : public object {
 public:
     NB_OBJECT(callable, object, "Callable[..., object]", PyCallable_Check)
     using object::object;
+};
+
+class weakref : public object {
+public:
+    NB_OBJECT(weakref, object, "weakref", PyWeakref_Check)
+
+    explicit weakref(handle obj, handle callback = {})
+        : object(PyWeakref_NewRef(obj.ptr(), callback.ptr()), detail::steal_t{}) {
+        if (!m_ptr)
+            detail::raise_python_error();
+    }
 };
 
 template <typename T> class handle_t : public handle {
@@ -600,6 +665,11 @@ public:
 };
 
 template <typename T, typename X> struct typed { T value; };
+
+template <typename T> struct pointer_and_handle {
+    T *p;
+    handle h;
+};
 
 NAMESPACE_BEGIN(detail)
 template <typename Derived> NB_INLINE api<Derived>::operator handle() const {
@@ -696,6 +766,7 @@ NB_IMPL_OP_2(operator+,  PyNumber_Add)
 NB_IMPL_OP_2(operator-,  PyNumber_Subtract)
 NB_IMPL_OP_2(operator*,  PyNumber_Multiply)
 NB_IMPL_OP_2(operator/,  PyNumber_TrueDivide)
+NB_IMPL_OP_2(operator%,  PyNumber_Remainder)
 NB_IMPL_OP_2(operator|,  PyNumber_Or)
 NB_IMPL_OP_2(operator&,  PyNumber_And)
 NB_IMPL_OP_2(operator^,  PyNumber_Xor)
@@ -703,6 +774,7 @@ NB_IMPL_OP_2(operator<<, PyNumber_Lshift)
 NB_IMPL_OP_2(operator>>, PyNumber_Rshift)
 NB_IMPL_OP_2(floor_div,  PyNumber_FloorDivide)
 NB_IMPL_OP_2_I(operator+=, PyNumber_InPlaceAdd)
+NB_IMPL_OP_2_I(operator%=, PyNumber_InPlaceRemainder)
 NB_IMPL_OP_2_I(operator-=, PyNumber_InPlaceSubtract)
 NB_IMPL_OP_2_I(operator*=, PyNumber_InPlaceMultiply)
 NB_IMPL_OP_2_I(operator/=, PyNumber_InPlaceTrueDivide)

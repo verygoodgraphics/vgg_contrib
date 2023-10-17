@@ -58,9 +58,9 @@ def test03_instantiate(clean):
 
 def test04_double_init():
     s = t.Struct()
-    with pytest.raises(RuntimeError) as excinfo:
-        s.__init__()
-    assert 'the __init__ method should not be called on an initialized object!' in str(excinfo.value)
+    with pytest.warns(RuntimeWarning, match='nanobind: attempted to initialize an already-initialized instance of type'):
+        with pytest.raises(TypeError):
+            s.__init__(3)
 
 
 def test05_rv_policy(clean):
@@ -125,6 +125,13 @@ def test06_reference_internal(clean):
         destructed=2
     )
 
+    # ----
+
+    s = t.PairStruct()
+    s1 = s.s1
+    del s1
+    del s
+
 
 def test07_big():
     x = [t.Big() for i in range(1024)]
@@ -143,6 +150,12 @@ def test08_inheritance():
     assert t.go(dog) == 'Dog says woof'
     assert t.go(cat) == 'Cat says meow'
 
+    assert t.animal_passthrough(dog) is dog
+    assert t.animal_passthrough(cat) is cat
+    assert t.dog_passthrough(dog) is dog
+
+    with pytest.raises(TypeError):
+        t.dog_passthrough(cat)
 
 def test09_method_vectorcall():
     out = []
@@ -176,6 +189,8 @@ def test10_trampoline(clean):
         for _ in range(10):
             assert t.go(d) == 'Dachshund says yap'
 
+        assert t.animal_passthrough(d) is d
+
     a = 0
     class GenericAnimal(t.Animal):
         def what(self):
@@ -192,6 +207,7 @@ def test10_trampoline(clean):
     assert t.go(ga) == 'GenericAnimal says goo'
     assert t.void_ret(ga) is None
     assert a == 1
+    assert t.animal_passthrough(ga) is ga
 
     del ga
     del d
@@ -201,6 +217,12 @@ def test10_trampoline(clean):
         destructed=11
     )
 
+    class GenericDog(t.Dog):
+        pass
+
+    d = GenericDog("GenericDog")
+    assert t.dog_passthrough(d) is d
+    assert t.animal_passthrough(d) is d
 
 def test11_trampoline_failures():
     class Incomplete(t.Animal):
@@ -234,12 +256,13 @@ def test11_trampoline_failures():
 
 
 def test12_large_pointers():
+    import struct
     for i in range(1, 10):
         c = t.i2p(i)
         assert isinstance(c, t.Foo)
         assert t.p2i(c) == i
 
-    large = 0xffffffffffffffff
+    large = (1 << (struct.calcsize("P")*8))-1
     for i in range(large - 10, large):
         c = t.i2p(i)
         assert isinstance(c, t.Foo)
@@ -286,6 +309,7 @@ def test15_keep_alive_nbtype(clean):
     s = t.Struct()
     a = t.Dog('Rufus')
     assert t.keep_alive_arg(s, a) is a
+    assert t.keep_alive_arg(s, a) is a
     del s
     assert_stats(
         default_constructed=1
@@ -299,6 +323,7 @@ def test15_keep_alive_nbtype(clean):
     t.reset()
     s = t.Struct()
     a = t.Dog('Rufus')
+    assert t.keep_alive_ret(a, s) is s
     assert t.keep_alive_ret(a, s) is s
     del a
     assert_stats(
@@ -443,16 +468,23 @@ def test21_type_callback():
 
 
 def test22_low_level(clean):
-    s1, s2, s3 = t.test_lowlevel()
-    assert s1.value() == 123 and s2.value() == 0 and s3.value() == 345
+    s1, s2, s3, s4 = t.test_lowlevel()
+    assert s1.value() == 123 and s2.value() == 0 and s4.value() == 123
+    assert s3.s1.value() == 123 and s3.s2.value() == 456
+    assert s3.s1 is s4
     del s1
     del s2
     del s3
+    import gc
+    gc.collect()
+    gc.collect()
+    assert s4.value() == 123
+    del s4
     assert_stats(
-        value_constructed=2,
+        value_constructed=3,
         copy_constructed=1,
         move_constructed=1,
-        destructed=4
+        destructed=5
     )
 
 
@@ -582,3 +614,111 @@ def test33_polymorphic_downcast():
     assert isinstance(t.factory_2(), t.Base)
     assert isinstance(t.polymorphic_factory(), t.PolymorphicSubclass)
     assert isinstance(t.polymorphic_factory_2(), t.PolymorphicBase)
+
+
+def test34_trampoline_optimization():
+    class Rufus(t.Dog):
+        def __init__(self):
+            super().__init__("woof")
+
+        def name(self):
+            return "Rufus"
+
+    for i in range(2):
+        d1 = t.Dog("woof")
+        d2 = Rufus()
+
+        if i == 0:
+            assert t.go(d1) == 'Dog says woof'
+            assert t.go(d2) == 'Rufus says woof'
+
+        old = t.Dog.name
+        try:
+            t.Dog.name = lambda self: "Max"
+
+            assert t.go(d1) == 'Dog says woof'
+            assert t.go(d2) == 'Rufus says woof'
+        finally:
+            t.Dog.name = old
+
+
+def test35_method_introspection():
+    obj = t.Struct(5)
+    m = obj.value
+    assert m() == m.__call__() == 5
+    assert hash(m) == m.__hash__()
+    assert repr(m) == m.__repr__()
+    assert "bound_method" in repr(m)
+    assert m.__self__ is obj
+    assert m.__func__ is t.Struct.value
+    # attributes not defined by nb_bound_method are forwarded to nb_method:
+    assert m.__name__ == "value"
+    assert m.__qualname__ == "Struct.value"
+    assert m.__module__ == t.__name__
+    assert m.__doc__ == t.Struct.value.__doc__ == "value(self) -> int"
+
+
+def test38_pickle(clean):
+    import pickle
+
+    s = t.Struct(123)
+    s2 = pickle.dumps(s, protocol=pickle.HIGHEST_PROTOCOL)
+    s3 = pickle.loads(s2)
+    assert s.value() == s3.value()
+    del s, s3
+
+    assert_stats(
+        value_constructed=1,
+        pickled=1,
+        unpickled=1,
+        destructed=2
+    )
+
+def test39_try_cast(clean):
+    s = t.Struct(123)
+
+    assert_stats(value_constructed=1)
+    t.reset()
+
+    rv, s2 = t.try_cast_1(s)
+    assert rv is True and s2 is not s and s.value() == 123 and s2.value() == 123
+    del s2
+    assert_stats(default_constructed=1, move_constructed=2, copy_assigned=1, destructed=3)
+    t.reset()
+
+    rv, s2 = t.try_cast_2(s)
+    assert rv is True and s2 is not s and s.value() == 123 and s2.value() == 123
+    del s2
+    assert_stats(default_constructed=1, move_constructed=2, copy_assigned=1, destructed=3)
+    t.reset()
+
+    rv, s2 = t.try_cast_3(s)
+    assert rv is True and s2 is s and s.value() == 123
+    del s2
+    assert_stats()
+    t.reset()
+
+    rv, s2 = t.try_cast_2(1)
+    assert rv is False
+    del s2
+    assert_stats(default_constructed=1, move_constructed=2, destructed=3)
+    t.reset()
+
+    rv, s2 = t.try_cast_3(1)
+    assert rv is False and s2 is None
+    del s2
+    assert_stats()
+    t.reset()
+
+    rv, s2 = t.try_cast_4(s)
+    assert rv is False and s2 == 0
+    rv, s2 = t.try_cast_4(123)
+    assert rv is True and s2 is 123
+    del s, s2
+
+    assert_stats(destructed=1)
+
+def test40_slots():
+    if not hasattr(t, "test_slots"):
+        pytest.skip()
+    assert t.test_slots() == (True, True, True)
