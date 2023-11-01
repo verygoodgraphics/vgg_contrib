@@ -31,6 +31,7 @@ All libraries should adhere to the following three rules:
 | [glm](https://github.com/g-truc/glm) | [Mixed](https://github.com/g-truc/glm/blob/master/manual.md#section0) | [0.9.9.8](https://github.com/g-truc/glm/releases/tag/0.9.9.8) | No | algorithm | Directory |
 | [yoga](https://github.com/facebook/yoga) | MIT | [vgg-yoga-main](https://github.com/verygoodgraphics/yoga) | Yes | algorithm | Directory |
 | [rapidfuzz-cpp](https://github.com/maxbachmann/rapidfuzz-cpp) | MIT | [2.0.0](https://github.com/maxbachmann/rapidfuzz-cpp/releases/tag/v2.0.0) | No | algorithm | Directory |
+| [bezier](https://github.com/oysteinmyrmo/bezier) | MIT | [0.2.1](https://github.com/oysteinmyrmo/bezier/tree/v0.2.1) | NO | algorithm | Single file |
 
 If you encounter compiling issues for boost, please refer to boost's [README](./boost/README.md).
 
@@ -106,6 +107,7 @@ add_subdirectory(path_to_your/vgg_contrib/zlib ${CMAKE_BINARY_DIR}/vgg_contrib/z
 | glm           | `VGG_CONTRIB_GLM_INCLUDE`                                    | N/A                                                          |
 | yoga          | `VGG_CONTRIB_YOGA_INCLUDE`                                   | static: `yogacore`                                           |
 | rapidfuzz-cpp | `VGG_CONTRIB_RAPIDFUZZCPP_INCLUDE`                           | N/A                                                          |
+| bezier        | `VGG_CONTRIB_BEZIER_INCLUDE`                                 | N/A                                                          |
 
 ## How to contribute
 
