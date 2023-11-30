@@ -1,0 +1,28 @@
+diff -ru original/sinfl.h upstream/sinfl.h
+--- original/sinfl.h	2023-11-30 16:32:28.866465318 +0800
++++ upstream/sinfl.h	2023-12-04 13:21:31.862156008 +0800
+@@ -190,12 +190,14 @@
+   memcpy(*dst, &n, 8);
+   *dst += 8, *src += 8;
+ }
++
++#ifdef SINFL_NO_SIMD
+ static unsigned char*
+ sinfl_write64(unsigned char *dst, unsigned long long w) {
+   memcpy(dst, &w, 8);
+   return dst + 8;
+ }
+-#ifndef SINFL_NO_SIMD
++#else
+ static unsigned char*
+ sinfl_write128(unsigned char *dst, sinfl_char16 w) {
+   sinfl_char16_str(dst, w);
+@@ -400,7 +402,7 @@
+     } break;
+     case stored: {
+       /* uncompressed block */
+-      int len, nlen;
++      int len, nlen __attribute__((unused));
+       sinfl_refill(&s);
+       sinfl__get(&s,s.bitcnt & 7);
+       len = sinfl__get(&s,16);

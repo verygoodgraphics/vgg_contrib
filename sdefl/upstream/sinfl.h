@@ -190,12 +190,14 @@ sinfl_copy64(unsigned char **dst, unsigned char **src) {
   memcpy(*dst, &n, 8);
   *dst += 8, *src += 8;
 }
+
+#ifdef SINFL_NO_SIMD
 static unsigned char*
 sinfl_write64(unsigned char *dst, unsigned long long w) {
   memcpy(dst, &w, 8);
   return dst + 8;
 }
-#ifndef SINFL_NO_SIMD
+#else
 static unsigned char*
 sinfl_write128(unsigned char *dst, sinfl_char16 w) {
   sinfl_char16_str(dst, w);
@@ -400,7 +402,7 @@ sinfl_decompress(unsigned char *out, int cap, const unsigned char *in, int size)
     } break;
     case stored: {
       /* uncompressed block */
-      int len, nlen;
+      int len, nlen __attribute__((unused));
       sinfl_refill(&s);
       sinfl__get(&s,s.bitcnt & 7);
       len = sinfl__get(&s,16);
