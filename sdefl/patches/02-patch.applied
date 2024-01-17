@@ -1,0 +1,30 @@
+diff --color -ru original/sdefl.h upstream/sdefl.h
+--- original/sdefl.h	2024-01-25 14:05:01.455425939 +0800
++++ upstream/sdefl.h	2024-01-25 14:00:10.165423777 +0800
+@@ -179,6 +179,9 @@
+ #include <assert.h> /* assert */
+ #include <string.h> /* memcpy */
+ #include <limits.h> /* CHAR_BIT */
++#ifdef _MSC_VER
++#include <intrin.h>
++#endif
+ 
+ #define SDEFL_NIL               (-1)
+ #define SDEFL_MAX_MATCH         258
+diff --color -ru original/sinfl.h upstream/sinfl.h
+--- original/sinfl.h	2024-01-25 14:04:54.525426675 +0800
++++ upstream/sinfl.h	2024-01-25 14:00:10.165423777 +0800
+@@ -402,11 +402,12 @@
+     } break;
+     case stored: {
+       /* uncompressed block */
+-      int len, nlen __attribute__((unused));
++      int len, nlen;
+       sinfl_refill(&s);
+       sinfl__get(&s,s.bitcnt & 7);
+       len = sinfl__get(&s,16);
+       nlen = sinfl__get(&s,16);
++      (void)nlen;
+       in -= 2; s.bitcnt = 0;
+ 
+       if (len > (e-in) || !len)

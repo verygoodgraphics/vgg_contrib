@@ -179,6 +179,9 @@ extern int zsdeflate(struct sdefl *s, void *o, const void *i, int n, int lvl);
 #include <assert.h> /* assert */
 #include <string.h> /* memcpy */
 #include <limits.h> /* CHAR_BIT */
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 #define SDEFL_NIL               (-1)
 #define SDEFL_MAX_MATCH         258
