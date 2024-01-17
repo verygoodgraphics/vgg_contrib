@@ -402,11 +402,12 @@ sinfl_decompress(unsigned char *out, int cap, const unsigned char *in, int size)
     } break;
     case stored: {
       /* uncompressed block */
-      int len, nlen __attribute__((unused));
+      int len, nlen;
       sinfl_refill(&s);
       sinfl__get(&s,s.bitcnt & 7);
       len = sinfl__get(&s,16);
       nlen = sinfl__get(&s,16);
+      (void)nlen;
       in -= 2; s.bitcnt = 0;
 
       if (len > (e-in) || !len)
