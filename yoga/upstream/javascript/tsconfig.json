@@ -1,18 +1,23 @@
 {
   "compilerOptions": {
-    "target": "es2018",
-    "module": "commonjs",
+    "target": "es2020",
+    "module": "esnext",
     "strict": true,
+    "declaration": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
+    // TODO: moduleResolution: "nodenext" is buggy with this if the absolute
+    // path contains any capital letters
+    "forceConsistentCasingInFileNames": false,
     "baseUrl": ".",
+    "moduleResolution": "nodenext",
+    "allowImportingTsExtensions": true,
     "paths": {
-      "yoga-layout": ["src_js"]
+      "yoga-layout": ["src"]
     }
   },
-  "ts-node": {
-    "transpileOnly": true
-  }
+  "include": [
+    "src/**/*",
+    "tests/**/*"
+  ]
 }

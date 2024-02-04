@@ -1,27 +1,14 @@
 # yoga-layout
 
-This package provides prebuilt JavaScript bindings for the Yoga layout engine. Both WebAssembly and asm.js variants are packaged, with the optimal loaded based on platform.
+This package provides prebuilt WebAssembly bindings for the Yoga layout engine.
 
 ## Usage
 
-The default entrypoint provides an asynchronous loader function to return a Yoga instance.
-
 ```ts
-import { loadYoga, ALIGN_CENTER } from "yoga-layout";
-
-const Yoga = await loadYoga();
+import {Yoga, Align} from 'yoga-layout';
 
 const node = Yoga.Node.create();
-node.setAlignContent(ALIGN_CENTER);
-```
-
-An alternative synchronous API is provided for compatibility, but requires using asm.js in browsers instead of WebAssembly, leading to worse performance and larger assets.
-
-```ts
-import Yoga, { ALIGN_CENTER } from "yoga-layout/sync";
-
-const node = Yoga.Node.create();
-node.setAlignContent(ALIGN_CENTER);
+node.setAlignContent(Align.Center);
 ```
 
 Objects created by `Yoga.<>.create()` are not automatically garbage collected and should be freed once they are no longer in use.
@@ -37,16 +24,13 @@ node.freeRecursive();
 node.free();
 ```
 
-## Selecting WebAssembly or asm.js
+## Using TypeScript
 
-For better performance and smaller packages, WebAssembly is preferred to asm.js where available. `yoga-layout` tries to provide the right default using [export maps](https://webpack.js.org/guides/package-exports/#conditional-syntax) so that platforms which can take advantage of WebAssembly use it by default.
+This package provides out-of-the-box TypeScript typings so long as `tsc` is configured to support ESM resolution. It is recommended to set `moduleResolution: 'bundler'` or `moduleResolution: node16` in your `tsconfig.json` according to your environment.
 
-A specific entrypoint may be specified on platforms which do not understand export conditions.
+## ES Modules
 
-```ts
-import { loadYoga } from "yoga-layout/dist/entrypoint/wasm-async";
-```
-
+`yoga-layout` is only provided as an ES Module, relying on top-level await. This allows providing a synchronous API, while still allowing async WebAssembly compilation in browsers, and will allow eventual usage of ESM/WASM interop.
 
 ## Contributing
 
