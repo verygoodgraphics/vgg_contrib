@@ -6,6 +6,7 @@
 /.buckd
 /gentest/test.html
 .buck-java11
+node_modules
 
 # Jekyll
 /.sass-cache/
@@ -69,3 +70,6 @@ local.properties
 # NDK/CMake
 .cxx
 .externalNativeBuild
+
+# Docusarus build
+.docusaurus

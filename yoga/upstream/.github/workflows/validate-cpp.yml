@@ -1,10 +1,11 @@
-name: C++
+name: Validate C++
 
 on:
   pull_request:
   push:
     branches:
       - main
+      - 'release-*'
   workflow_dispatch:
 
 env:
@@ -12,34 +13,58 @@ env:
 
 jobs:
   test:
-    name: Build and Test [${{ matrix.os }}][${{ matrix.mode }}]
-    runs-on: ${{ matrix.os }}
+    name: Build and Test [${{ matrix.toolchain }}][${{ matrix.mode }}]
+    runs-on: ${{ (matrix.toolchain == 'MSVC') && 'windows-latest' || 'ubuntu-latest'  }}
     strategy:
       matrix:
         mode: [Debug, Release]
-        os: [ubuntu-latest] # TODO: fix issues building GTest Binary with MSVC in GitHub Actions
+        toolchain: [Clang, GCC] # TODO: fix issues building GTest Binary with MSVC in GitHub Actions
 
     steps:
       - uses: actions/checkout@v3
 
       - name: Setup
         uses: ./.github/actions/setup-cpp
+        with:
+          toolchain: ${{ matrix.toolchain }}
 
       - name: Unit tests
         run: ./unit_tests ${{ matrix.mode }}
 
-  benchmark:
-    name: Benchmark [${{ matrix.os }}]
-    runs-on: ${{ matrix.os }}
+
+  build_fuzzers:
+    name: Build fuzzers [${{ matrix.toolchain }}][${{ matrix.mode }}]
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        mode: [Debug, Release]
+        toolchain: [Clang]
 
     steps:
       - uses: actions/checkout@v3
 
       - name: Setup
         uses: ./.github/actions/setup-cpp
+        with:
+          toolchain: ${{ matrix.toolchain }}
+
+      - name: Unit tests
+        run: ./build_fuzz_tests ${{ matrix.mode }}
+
+  benchmark:
+    name: Benchmark [${{ matrix.toolchain }}]
+    runs-on: ${{ (matrix.toolchain == 'MSVC') && 'windows-latest' || 'ubuntu-latest'  }}
+    strategy:
+      matrix:
+        toolchain: [Clang, GCC, MSVC]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup
+        uses: ./.github/actions/setup-cpp
+        with:
+          toolchain: ${{ matrix.toolchain }}
 
       - name: Build benchmark
         run: |
@@ -51,6 +76,27 @@ jobs:
         run: ./build/benchmark
         working-directory: benchmark
 
+  capture:
+    name: Capture [${{ matrix.toolchain }}]
+    runs-on: ${{ (matrix.toolchain == 'MSVC') && 'windows-latest' || 'ubuntu-latest'  }}
+    strategy:
+      matrix:
+        toolchain: [Clang, GCC, MSVC]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup
+        uses: ./.github/actions/setup-cpp
+        with:
+          toolchain: ${{ matrix.toolchain }}
+
+      - name: Build capture
+        run: |
+          cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release
+          cmake --build build
+        working-directory: capture
+
   clang-format:
     name: Format
     runs-on: ubuntu-latest
@@ -60,5 +106,3 @@ jobs:
 
       - name: clang-format
         uses: ./.github/actions/clang-format
-        with:
-          directory: ./yoga

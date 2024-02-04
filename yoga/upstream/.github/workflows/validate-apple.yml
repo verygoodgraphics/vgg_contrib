@@ -1,16 +1,17 @@
-name: Apple
+name: Validate Apple
 
 on:
   pull_request:
   push:
     branches:
       - main
+      - 'release-*'
   workflow_dispatch:
 
 jobs:
   lint-pods:
-    name: Lint
-    runs-on: macos-latest
+    name: Build [CocoaPods]
+    runs-on: macos-13
 
     steps:
       - uses: actions/checkout@v3
@@ -18,16 +19,12 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup-apple
 
-      - name: pod spec lint
-        run: pod spec lint --verbose
-        continue-on-error: true # Apple Build is Broken
+      - name: pod lib lint
+        run: pod lib lint --verbose --include-podspecs=**/*.podspec
 
-  build-sample:
-    name: Build [${{ matrix.mode }}]
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        mode: [Debug, Release]
+  test:
+    name: Build [SwiftPM]
+    runs-on: macos-13
 
     steps:
       - uses: actions/checkout@v3
@@ -35,21 +32,8 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup-apple
 
-      - name: pod install
-        run: pod install
-        working-directory: ./YogaKit/YogaKitSample
-        continue-on-error: true # Apple Build is Broken
+      - name: Build Debug
+        run: swift build -c debug
 
-      # TODO: xcodebuild
-
-  clang-format:
-    name: Format
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: clang-format
-        uses: ./.github/actions/clang-format
-        with:
-          directory: ./YogaKit
+      - name: Build Release
+        run: swift build -c release

@@ -6,15 +6,14 @@
  */
 
 #include <gtest/gtest.h>
-#include <yoga/YGNode.h>
 #include <yoga/Yoga.h>
 
 static YGSize _measureFloor(
-    YGNodeRef node,
+    YGNodeConstRef /*node*/,
     float width,
-    YGMeasureMode widthMode,
+    YGMeasureMode /*widthMode*/,
     float height,
-    YGMeasureMode heightMode) {
+    YGMeasureMode /*heightMode*/) {
   return YGSize{
       width = 10.2f,
       height = 10.2f,
@@ -22,11 +21,11 @@ static YGSize _measureFloor(
 }
 
 static YGSize _measureCeil(
-    YGNodeRef node,
+    YGNodeConstRef /*node*/,
     float width,
-    YGMeasureMode widthMode,
+    YGMeasureMode /*widthMode*/,
     float height,
-    YGMeasureMode heightMode) {
+    YGMeasureMode /*heightMode*/) {
   return YGSize{
       width = 10.5f,
       height = 10.5f,
@@ -34,11 +33,11 @@ static YGSize _measureCeil(
 }
 
 static YGSize _measureFractial(
-    YGNodeRef node,
+    YGNodeConstRef /*node*/,
     float width,
-    YGMeasureMode widthMode,
+    YGMeasureMode /*widthMode*/,
     float height,
-    YGMeasureMode heightMode) {
+    YGMeasureMode /*heightMode*/) {
   return YGSize{
       width = 0.5f,
       height = 0.5f,
@@ -50,7 +49,7 @@ TEST(YogaTest, rounding_feature_with_custom_measure_func_floor) {
   const YGNodeRef root = YGNodeNewWithConfig(config);
 
   const YGNodeRef root_child0 = YGNodeNewWithConfig(config);
-  root_child0->setMeasureFunc(_measureFloor);
+  YGNodeSetMeasureFunc(root_child0, _measureFloor);
   YGNodeInsertChild(root, root_child0, 0);
 
   YGConfigSetPointScaleFactor(config, 0.0f);
@@ -98,7 +97,7 @@ TEST(YogaTest, rounding_feature_with_custom_measure_func_ceil) {
   const YGNodeRef root = YGNodeNewWithConfig(config);
 
   const YGNodeRef root_child0 = YGNodeNewWithConfig(config);
-  root_child0->setMeasureFunc(_measureCeil);
+  YGNodeSetMeasureFunc(root_child0, _measureCeil);
   YGNodeInsertChild(root, root_child0, 0);
 
   YGConfigSetPointScaleFactor(config, 1.0f);
@@ -118,10 +117,12 @@ TEST(
     rounding_feature_with_custom_measure_and_fractial_matching_scale) {
   const YGConfigRef config = YGConfigNew();
   const YGNodeRef root = YGNodeNewWithConfig(config);
+  YGNodeStyleSetPositionType(root, YGPositionTypeAbsolute);
 
   const YGNodeRef root_child0 = YGNodeNewWithConfig(config);
   YGNodeStyleSetPosition(root_child0, YGEdgeLeft, 73.625);
-  root_child0->setMeasureFunc(_measureFractial);
+  YGNodeStyleSetPositionType(root_child0, YGPositionTypeRelative);
+  YGNodeSetMeasureFunc(root_child0, _measureFractial);
   YGNodeInsertChild(root, root_child0, 0);
 
   YGConfigSetPointScaleFactor(config, 2.0f);

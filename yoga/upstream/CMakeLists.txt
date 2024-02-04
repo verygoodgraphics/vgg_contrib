@@ -3,16 +3,20 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.13...3.26)
 project(yoga-all)
 set(CMAKE_VERBOSE_MAKEFILE on)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/project-defaults.cmake)
 
 add_subdirectory(yoga)
+add_subdirectory(tests)
 
-# add by vgg, to avoid forcing advanced versions of cmake.
-# add_subdirectory(tests)
+option(BUILD_FUZZ_TESTS "Build fuzz tests" OFF)
+
+if ('${CMAKE_CXX_COMPILER_ID}' MATCHES 'Clang' AND  BUILD_FUZZ_TESTS)
+    add_subdirectory(fuzz)
+endif()
 
 # cmake install config
 include(GNUInstallDirs)
