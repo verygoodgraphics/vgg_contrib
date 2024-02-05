@@ -8,6 +8,10 @@ cmake_minimum_required(VERSION 3.13...3.26)
 project(yogacore)
 set(CMAKE_VERBOSE_MAKEFILE on)
 
+if(MSVC)
+    add_compile_options(/source-charset:utf-8)
+endif()
+
 if(TARGET yogacore)
     return()
 endif()

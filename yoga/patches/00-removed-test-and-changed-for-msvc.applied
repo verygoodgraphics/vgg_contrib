@@ -1,0 +1,26 @@
+diff -ru original/CMakeLists.txt upstream/CMakeLists.txt
+--- original/CMakeLists.txt	2024-02-05 18:51:46.936706500 +0800
++++ upstream/CMakeLists.txt	2024-02-05 18:53:25.606617700 +0800
+@@ -10,7 +10,7 @@
+ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/project-defaults.cmake)
+ 
+ add_subdirectory(yoga)
+-add_subdirectory(tests)
++# add_subdirectory(tests)
+ 
+ option(BUILD_FUZZ_TESTS "Build fuzz tests" OFF)
+ 
+diff -ru original/yoga/CMakeLists.txt upstream/yoga/CMakeLists.txt
+--- original/yoga/CMakeLists.txt	2024-02-05 18:51:48.882907600 +0800
++++ upstream/yoga/CMakeLists.txt	2024-02-05 18:53:19.420804800 +0800
+@@ -8,6 +8,10 @@
+ project(yogacore)
+ set(CMAKE_VERBOSE_MAKEFILE on)
+ 
++if(MSVC)
++    add_compile_options(/source-charset:utf-8)
++endif()
++
+ if(TARGET yogacore)
+     return()
+ endif()
