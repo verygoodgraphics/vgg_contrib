@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.7)
 project(vgg_contrib_boost)
 
 # project-wide configs
-set(boost_prefix upstream/boost_1_80_0)
+set(boost_prefix upstream/boost_1_84_0)
 if (NOT MSVC)
   add_compile_options(-Wno-deprecated-declarations)
 endif()
@@ -62,6 +62,8 @@ add_subdirectory(${boost_prefix}/libs/unordered)
 add_subdirectory(${boost_prefix}/libs/rational)
 add_subdirectory(${boost_prefix}/libs/mp11)
 add_subdirectory(${boost_prefix}/libs/locale)
+add_subdirectory(${boost_prefix}/libs/describe)
+add_subdirectory(${boost_prefix}/libs/functional)
 
 if (NOT EMSCRIPTEN)
   # for boost-asio and boost-beast
