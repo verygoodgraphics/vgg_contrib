@@ -432,7 +432,14 @@ class YG_EXPORT Style {
     auto gap = isRow(axis) ? computeColumnGap() : computeRowGap();
     // TODO: Validate percentage gap, and expose ability to set percentage to
     // public API
-    return maxOrDefined(gap.resolve(0.0f /*ownerSize*/).unwrap(), 0.0f);
+
+    // return maxOrDefined(gap.resolve(0.0f /*ownerSize*/).unwrap(), 0.0f);
+
+    auto value = gap.resolve(0.0f /*ownerSize*/).unwrap();
+    if (std::isfinite(value)) {
+      return value;
+    }
+    return 0;
   }
 
   bool flexStartMarginIsAuto(FlexDirection axis, Direction direction) const {

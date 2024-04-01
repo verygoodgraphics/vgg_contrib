@@ -1,0 +1,19 @@
+diff -ru upstreamC/yoga/style/Style.h upstream/yoga/style/Style.h
+--- upstreamC/yoga/style/Style.h	2024-04-01 14:11:36.444219500 +0800
++++ upstream/yoga/style/Style.h	2024-04-01 14:00:17.770749500 +0800
+@@ -432,7 +432,14 @@
+     auto gap = isRow(axis) ? computeColumnGap() : computeRowGap();
+     // TODO: Validate percentage gap, and expose ability to set percentage to
+     // public API
+-    return maxOrDefined(gap.resolve(0.0f /*ownerSize*/).unwrap(), 0.0f);
++
++    // return maxOrDefined(gap.resolve(0.0f /*ownerSize*/).unwrap(), 0.0f);
++
++    auto value = gap.resolve(0.0f /*ownerSize*/).unwrap();
++    if (std::isfinite(value)) {
++      return value;
++    }
++    return 0;
+   }
+ 
+   bool flexStartMarginIsAuto(FlexDirection axis, Direction direction) const {
