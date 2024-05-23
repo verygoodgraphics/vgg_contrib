@@ -1,0 +1,12 @@
+diff --color -ru original/src/zip.c upstream/src/zip.c
+--- original/src/zip.c	2024-05-23 22:46:55.421270693 +0800
++++ upstream/src/zip.c	2024-05-23 22:47:21.331272173 +0800
+@@ -1673,7 +1673,7 @@
+     *bufsize = n;
+   }
+ 
+-  *buf = calloc(sizeof(unsigned char), n);
++  *buf = calloc(n, sizeof(unsigned char));
+   memcpy(*buf, zip->archive.m_pState->m_pMem, n);
+ 
+   return (ssize_t)n;

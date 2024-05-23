@@ -1,0 +1,21 @@
+diff --color -ru original/rxcpp/rx-notification.hpp upstream/rxcpp/rx-notification.hpp
+--- original/rxcpp/rx-notification.hpp	2024-05-23 22:28:38.691269268 +0800
++++ upstream/rxcpp/rx-notification.hpp	2024-05-23 22:30:22.721269266 +0800
+@@ -142,7 +142,7 @@
+         virtual void accept(const typename base::observer_type& o) const {
+             o.on_next(value);
+         }
+-        const T value;
++        T value;
+     };
+ 
+     struct on_error_notification : public base {
+@@ -167,7 +167,7 @@
+         virtual void accept(const typename base::observer_type& o) const {
+             o.on_error(ep);
+         }
+-        const rxu::error_ptr ep;
++        rxu::error_ptr ep;
+     };
+ 
+     struct on_completed_notification : public base {
