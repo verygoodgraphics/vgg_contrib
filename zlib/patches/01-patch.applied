@@ -1,0 +1,14 @@
+diff --color -ru original/CMakeLists.txt upstream/CMakeLists.txt
+--- original/CMakeLists.txt	2024-07-24 17:33:28
++++ upstream/CMakeLists.txt	2024-07-24 17:32:39
+@@ -53,6 +53,10 @@
+     add_definitions(-DNO_FSEEKO)
+ endif()
+ 
++if(APPLE)
++    add_definitions(-Wno-implicit-function-declaration)
++endif()
++
+ #
+ # Check for unistd.h
+ #

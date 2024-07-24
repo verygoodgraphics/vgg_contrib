@@ -53,6 +53,10 @@ if(NOT HAVE_FSEEKO)
     add_definitions(-DNO_FSEEKO)
 endif()
 
+if(APPLE)
+    add_definitions(-Wno-implicit-function-declaration)
+endif()
+
 #
 # Check for unistd.h
 #
