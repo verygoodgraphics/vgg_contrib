@@ -1,0 +1,12 @@
+diff -ru original/CMakeLists.txt upstream/CMakeLists.txt
+--- original/CMakeLists.txt	2024-01-23 02:32:37.000000000 +0800
++++ upstream/CMakeLists.txt	2024-07-24 17:10:43.740964796 +0800
+@@ -73,7 +73,7 @@
+         message(STATUS "    ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h")
+         message(STATUS "to 'zconf.h.included' because this file is included with zlib")
+         message(STATUS "but CMake generates it automatically in the build directory.")
+-        file(RENAME ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.included)
++        #file(RENAME ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h ${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.included)
+   endif()
+ endif()
+ 
